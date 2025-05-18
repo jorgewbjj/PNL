@@ -1,116 +1,202 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Project P&L Tracker</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project P&L Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
     <style>
-        .container { padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        input { width: 80px; border: 1px solid #ddd; padding: 3px; }
-        .status-dropdown { width: 100px; }
-        .add-btn { margin: 10px 0; }
+        /* Keep your existing styles and add these */
+        .financial-input {
+            width: 80px;
+            padding: 4px;
+            text-align: right;
+        }
+        
+        .profit-cell {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        
+        .negative-profit {
+            color: #dc3545;
+        }
+        
+        .positive-profit {
+            color: #28a745;
+        }
+        
+        .summary-row {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <button class="add-btn" onclick="addProjectRow()">Add Project</button>
+    <h1>Project Profit & Loss</h1>
+    <div class="projects-container">
         <table id="projectsTable">
             <thead>
                 <tr>
-                    <th>Project Name</th>
-                    <th>Value ($)</th>
-                    <th>Date</th>
-                    <th>Labor ($)</th>
-                    <th>Contractor</th>
-                    <th>Amex ($)</th>
-                    <th>Gas ($)</th>
-                    <th>Hotel ($)</th>
-                    <th>Travel ($)</th>
-                    <th>Materials ($)</th>
+                    <th>Project</th>
                     <th>Customer</th>
+                    <th>Store</th>
+                    <th>Technician</th>
                     <th>Status</th>
-                    <th>Net Profit ($)</th>
+                    <th>Value</th>
+                    <th>Materials</th>
+                    <th>Labor</th>
+                    <th>Hotel</th>
+                    <th>Gas</th>
+                    <th>Net Profit</th>
                 </tr>
             </thead>
-            <tbody>
-                <!-- Sample Project Row -->
-                <tr>
-                    <td><input type="text" value="Project Alpha"></td>
-                    <td><input type="number" value="5000" class="editable-value"></td>
-                    <td><input type="date" value="2024-03-15"></td>
-                    <td><input type="number" value="1200" class="expense"></td>
-                    <td><input type="text" value="Elias Contracting"></td>
-                    <td><input type="number" value="300" class="expense"></td>
-                    <td><input type="number" value="150" class="expense"></td>
-                    <td><input type="number" value="450" class="expense"></td>
-                    <td><input type="number" value="200" class="expense"></td>
-                    <td><input type="number" value="800" class="expense"></td>
-                    <td><input type="text" value="ABC Corp"></td>
-                    <td>
-                        <select class="status-dropdown">
-                            <option>Active</option>
-                            <option>Completed</option>
-                            <option>On Hold</option>
-                        </select>
-                    </td>
-                    <td class="net-profit">1700</td>
-                </tr>
+            <tbody id="projectsBody">
             </tbody>
+            <tfoot>
+                <tr class="summary-row">
+                    <td colspan="5">Total</td>
+                    <td id="totalValue">0</td>
+                    <td id="totalMaterials">0</td>
+                    <td id="totalLabor">0</td>
+                    <td id="totalHotel">0</td>
+                    <td id="totalGas">0</td>
+                    <td id="totalProfit">0</td>
+                </tr>
+            </tfoot>
         </table>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
     <script>
-        // Add new project row
-        function addProjectRow() {
-            const table = document.getElementById('projectsTable').getElementsByTagName('tbody')[0];
-            const newRow = table.insertRow();
+        const firebaseConfig = {
+            apiKey: "AIzaSyAbBe90F1K_S0MO0egbX61FPeu4YM1L3uw",
+            authDomain: "sealtopprojects.firebaseapp.com",
+            databaseURL: "https://sealtopprojects-default-rtdb.firebaseio.com",
+            projectId: "sealtopprojects",
+            storageBucket: "sealtopprojects.firebasestorage.app",
+            messagingSenderId: "832836984463",
+            appId: "1:832836984463:web:fba3588b57ea50466f1afa"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const projectsRef = database.ref('projects');
+
+        function calculateProfit(project) {
+            const value = parseFloat(project.value) || 0;
+            const materials = parseFloat(project.materials) || 0;
+            const labor = parseFloat(project.labor) || 0;
+            const hotel = parseFloat(project.hotel) || 0;
+            const gas = parseFloat(project.gas) || 0;
             
-            newRow.innerHTML = `
-                <td><input type="text" placeholder="Project Name"></td>
-                <td><input type="number" value="0" class="editable-value"></td>
-                <td><input type="date"></td>
-                <td><input type="number" value="0" class="expense"></td>
-                <td><input type="text"></td>
-                <td><input type="number" value="0" class="expense"></td>
-                <td><input type="number" value="0" class="expense"></td>
-                <td><input type="number" value="0" class="expense"></td>
-                <td><input type="number" value="0" class="expense"></td>
-                <td><input type="number" value="0" class="expense"></td>
-                <td><input type="text"></td>
-                <td>
-                    <select class="status-dropdown">
-                        <option>Active</option>
-                        <option>Completed</option>
-                        <option>On Hold</option>
-                    </select>
-                </td>
-                <td class="net-profit">0</td>
+            return value - (materials + labor + hotel + gas);
+        }
+
+        function updateFinancialTotals() {
+            let totalValue = 0, totalMaterials = 0, totalLabor = 0,
+                totalHotel = 0, totalGas = 0, totalProfit = 0;
+
+            document.querySelectorAll('#projectsBody tr').forEach(row => {
+                totalValue += parseFloat(row.querySelector('.value-input').value) || 0;
+                totalMaterials += parseFloat(row.querySelector('.materials-input').value) || 0;
+                totalLabor += parseFloat(row.querySelector('.labor-input').value) || 0;
+                totalHotel += parseFloat(row.querySelector('.hotel-input').value) || 0;
+                totalGas += parseFloat(row.querySelector('.gas-input').value) || 0;
+                totalProfit += parseFloat(row.querySelector('.profit-cell').textContent) || 0;
+            });
+
+            document.getElementById('totalValue').textContent = totalValue.toFixed(2);
+            document.getElementById('totalMaterials').textContent = totalMaterials.toFixed(2);
+            document.getElementById('totalLabor').textContent = totalLabor.toFixed(2);
+            document.getElementById('totalHotel').textContent = totalHotel.toFixed(2);
+            document.getElementById('totalGas').textContent = totalGas.toFixed(2);
+            document.getElementById('totalProfit').textContent = totalProfit.toFixed(2);
+        }
+
+        function updateProjectFinancials(projectId) {
+            const row = document.getElementById(projectId);
+            const profit = calculateProfit({
+                value: row.querySelector('.value-input').value,
+                materials: row.querySelector('.materials-input').value,
+                labor: row.querySelector('.labor-input').value,
+                hotel: row.querySelector('.hotel-input').value,
+                gas: row.querySelector('.gas-input').value
+            });
+
+            const profitCell = row.querySelector('.profit-cell');
+            profitCell.textContent = profit.toFixed(2);
+            profitCell.className = `profit-cell ${profit < 0 ? 'negative-profit' : 'positive-profit'}`;
+
+            updateFinancialTotals();
+        }
+
+        function createFinancialRow(project, id) {
+            const row = document.createElement('tr');
+            row.id = id;
+
+            row.innerHTML = `
+                <td>${project.name}</td>
+                <td>${project.customer || ''}</td>
+                <td>${project.store || ''}</td>
+                <td>${project.technician || ''}</td>
+                <td>${project.status || ''}</td>
+                <td><input class="financial-input value-input" type="number" 
+                     value="${project.value || 0}" 
+                     onchange="updateProjectFinancials('${id}')"></td>
+                <td><input class="financial-input materials-input" type="number" 
+                     value="${project.materials || 0}" 
+                     onchange="updateProjectFinancials('${id}')"></td>
+                <td><input class="financial-input labor-input" type="number" 
+                     value="${project.labor || 0}" 
+                     onchange="updateProjectFinancials('${id}')"></td>
+                <td><input class="financial-input hotel-input" type="number" 
+                     value="${project.hotel || 0}" 
+                     onchange="updateProjectFinancials('${id}')"></td>
+                <td><input class="financial-input gas-input" type="number" 
+                     value="${project.gas || 0}" 
+                     onchange="updateProjectFinancials('${id}')"></td>
+                <td class="profit-cell">0</td>
             `;
 
-            // Add event listeners to new inputs
-            newRow.querySelectorAll('input').forEach(input => {
-                input.addEventListener('input', calculateNetProfit);
-            });
+            // Initial calculation
+            updateProjectFinancials(id);
+            return row;
         }
 
-        // Calculate net profit
-        function calculateNetProfit() {
-            const rows = document.querySelectorAll('#projectsTable tbody tr');
-            
-            rows.forEach(row => {
-                const value = parseFloat(row.querySelector('.editable-value').value) || 0;
-                const expenses = Array.from(row.querySelectorAll('.expense'))
-                                    .reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
-                
-                const netProfit = value - expenses;
-                row.querySelector('.net-profit').textContent = netProfit.toFixed(2);
+        // Firebase data listener
+        projectsRef.on('value', snapshot => {
+            const projectsBody = document.getElementById('projectsBody');
+            projectsBody.innerHTML = '';
+
+            snapshot.forEach(child => {
+                const project = child.val();
+                projectsBody.appendChild(createFinancialRow(project, child.key));
             });
+        });
+
+        // Add real-time updates to Firebase
+        function debounce(func, timeout = 300){
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => { func.apply(this, args); }, timeout);
+            };
         }
 
-        // Add initial event listeners
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', calculateNetProfit);
+        const saveToFirebase = debounce((projectId, field, value) => {
+            database.ref(`projects/${projectId}/${field}`).set(parseFloat(value) || 0);
+        });
+
+        document.addEventListener('input', (e) => {
+            if (e.target.classList.contains('financial-input')) {
+                const row = e.target.closest('tr');
+                const projectId = row.id;
+                const field = e.target.className.replace('financial-input ', '');
+                saveToFirebase(projectId, field, e.target.value);
+            }
         });
     </script>
 </body>
