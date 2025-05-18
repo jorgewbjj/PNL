@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Project P&L Tracker</title>
+    <style>
+        .container { padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        input { width: 80px; border: 1px solid #ddd; padding: 3px; }
+        .status-dropdown { width: 100px; }
+        .add-btn { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="add-btn" onclick="addProjectRow()">Add Project</button>
+        <table id="projectsTable">
+            <thead>
+                <tr>
+                    <th>Project Name</th>
+                    <th>Value ($)</th>
+                    <th>Date</th>
+                    <th>Labor ($)</th>
+                    <th>Contractor</th>
+                    <th>Amex ($)</th>
+                    <th>Gas ($)</th>
+                    <th>Hotel ($)</th>
+                    <th>Travel ($)</th>
+                    <th>Materials ($)</th>
+                    <th>Customer</th>
+                    <th>Status</th>
+                    <th>Net Profit ($)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Sample Project Row -->
+                <tr>
+                    <td><input type="text" value="Project Alpha"></td>
+                    <td><input type="number" value="5000" class="editable-value"></td>
+                    <td><input type="date" value="2024-03-15"></td>
+                    <td><input type="number" value="1200" class="expense"></td>
+                    <td><input type="text" value="Elias Contracting"></td>
+                    <td><input type="number" value="300" class="expense"></td>
+                    <td><input type="number" value="150" class="expense"></td>
+                    <td><input type="number" value="450" class="expense"></td>
+                    <td><input type="number" value="200" class="expense"></td>
+                    <td><input type="number" value="800" class="expense"></td>
+                    <td><input type="text" value="ABC Corp"></td>
+                    <td>
+                        <select class="status-dropdown">
+                            <option>Active</option>
+                            <option>Completed</option>
+                            <option>On Hold</option>
+                        </select>
+                    </td>
+                    <td class="net-profit">1700</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Add new project row
+        function addProjectRow() {
+            const table = document.getElementById('projectsTable').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+            
+            newRow.innerHTML = `
+                <td><input type="text" placeholder="Project Name"></td>
+                <td><input type="number" value="0" class="editable-value"></td>
+                <td><input type="date"></td>
+                <td><input type="number" value="0" class="expense"></td>
+                <td><input type="text"></td>
+                <td><input type="number" value="0" class="expense"></td>
+                <td><input type="number" value="0" class="expense"></td>
+                <td><input type="number" value="0" class="expense"></td>
+                <td><input type="number" value="0" class="expense"></td>
+                <td><input type="number" value="0" class="expense"></td>
+                <td><input type="text"></td>
+                <td>
+                    <select class="status-dropdown">
+                        <option>Active</option>
+                        <option>Completed</option>
+                        <option>On Hold</option>
+                    </select>
+                </td>
+                <td class="net-profit">0</td>
+            `;
+
+            // Add event listeners to new inputs
+            newRow.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', calculateNetProfit);
+            });
+        }
+
+        // Calculate net profit
+        function calculateNetProfit() {
+            const rows = document.querySelectorAll('#projectsTable tbody tr');
+            
+            rows.forEach(row => {
+                const value = parseFloat(row.querySelector('.editable-value').value) || 0;
+                const expenses = Array.from(row.querySelectorAll('.expense'))
+                                    .reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+                
+                const netProfit = value - expenses;
+                row.querySelector('.net-profit').textContent = netProfit.toFixed(2);
+            });
+        }
+
+        // Add initial event listeners
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', calculateNetProfit);
+        });
+    </script>
+</body>
+</html>
