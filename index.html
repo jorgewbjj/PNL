@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,47 +10,33 @@
     <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
 
-    <!-- Google Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: #f7f9fc;
-            margin: 0; padding: 20px;
-            display: flex; justify-content: center;
-        }
-        .container {
-            width: 100%; max-width: 1200px;
-            background: #fff; border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding:20px;
-        }
-        h2 { margin-bottom:15px; color:#333; }
-        input, select, textarea {
-            width: 100%; padding: 8px;
-            border-radius:4px; border:1px solid #ddd;
-            box-sizing: border-box; margin-bottom:10px;
-        }
-        button {
-            padding:8px 15px; background:#0a74da; color:#fff;
-            border:none; border-radius:4px; cursor:pointer;
-        }
-        button:hover { background:#095bb5; }
-        table { width:100%; border-collapse:collapse; }
-        th, td { padding:8px; text-align:left; border-bottom:1px solid #eee; }
-        .status { padding:3px 7px; border-radius:4px; color:#fff; font-size:0.8em; }
-        .Planned{background:#6c757d}.InProgress{background:#ffc107}.Completed{background:#28a745}
-        .options { display:none; gap:5px; }
-        .expand-btn { cursor:pointer; }
-        .arrow { transition:0.2s ease; }
-        .arrow.open { transform:rotate(90deg); }
+        body { font-family: 'Roboto', sans-serif; background: #f7f9fc; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1200px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+        input, select, textarea, button { padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-bottom:10px; }
+        button { background: #0a74da; color: #fff; cursor: pointer; }
+        button:hover { background: #095bb5; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+        .status { padding: 3px 7px; border-radius: 4px; color: #fff; font-size: 0.8em; }
+        .Planned { background: #6c757d; }
+        .WorkScheduled { background: #17a2b8; }
+        .InProgress { background: #ffc107; }
+        .Completed { background: #28a745; }
+        .expand-btn { cursor: pointer; }
+        .options { display: none; }
+        .arrow { transition: 0.2s ease; }
+        .arrow.open { transform: rotate(90deg); }
     </style>
 </head>
 <body>
 <div class="container">
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <h2>Project Management</h2>
-        <button style="padding:6px 12px; font-size:14px;" onclick="window.open('calendar.html','_blank')">📅 Calendar View</button>
+        <button onclick="window.open('calendar.html','_blank')">📅 Calendar View</button>
     </div>
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -65,11 +50,14 @@
             <option disabled selected>Technician</option>
             <option>Arister</option><option>Elias</option><option>Gavino</option><option>David Romero</option><option value="new">➕ Add Technician</option>
         </select>
-        <input id="date" type="date" style="flex:1;">
         <input id="due_date" type="date" style="flex:1;">
         <select id="status" style="flex:1;">
-            <option value="Planned">Planned</option><option value="InProgress">In Progress</option><option value="Completed">Completed</option>
+            <option value="Planned">Planned</option>
+            <option value="WorkScheduled">Work Scheduled</option>
+            <option value="InProgress">In Progress</option>
+            <option value="Completed">Completed</option>
         </select>
+        <input id="wo" placeholder="WO #" style="flex:1;">
         <textarea id="observations" placeholder="Observations" style="flex:3;height:38px;"></textarea>
         <button onclick="addProject()" style="flex:0.5;">Add</button>
     </div>
@@ -77,8 +65,8 @@
     <table>
         <thead>
             <tr>
-                <th></th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
-                <th>Start</th><th>Due</th><th>Status</th><th>Notes</th>
+                <th></th><th>WO #</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
+                <th>Due Date</th><th>Status</th><th>Notes</th>
             </tr>
         </thead>
         <tbody id="list"></tbody>
@@ -97,10 +85,10 @@ const firebaseConfig = {
   appId: "1:761253335013:web:44c30372a4749203a3690c"
 };
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database().ref('projects');
+const db = firebase.database().ref('projects');
 
-function addProject(){
-    const ids=["project","customer","store","technician","date","due_date","status","observations"];
+function addProject() {
+    const ids=["project","customer","store","technician","due_date","status","wo","observations"];
     const data={};
     ids.forEach(id=>data[id]=document.getElementById(id).value);
     if(ids.slice(0,6).every(id=>data[id])){
@@ -109,23 +97,28 @@ function addProject(){
     }else alert("Fill required fields.");
 }
 
-db.on('value',snap=>{
-    const tbody=document.getElementById('list');tbody.innerHTML="";
-    snap.forEach(c=>{
-        const p=c.val(),id=c.key;
+db.on('value', snap => {
+    const tbody = document.getElementById('list');
+    tbody.innerHTML = "";
+    const projects = [];
+    snap.forEach(c => {
+        projects.push({...c.val(), id:c.key});
+    });
+    projects.sort((a,b)=> new Date(a.due_date)-new Date(b.due_date));
+    projects.forEach(p=>{
         tbody.innerHTML+=`
-        <tr data-id="${id}">
-            <td class="expand-btn" onclick="toggle('${id}')">
-                <span class="arrow" id="arrow-${id}">▶️</span>
+        <tr data-id="${p.id}">
+            <td class="expand-btn" onclick="toggle('${p.id}')">
+                <span class="arrow" id="arrow-${p.id}">▶️</span>
             </td>
-            <td>${p.project}</td><td>${p.customer}</td><td>${p.store}</td><td>${p.technician}</td>
-            <td>${p.date}</td><td>${p.due_date}</td>
-            <td><span class="status ${p.status.replace(' ','')}">${p.status}</span></td>
+            <td>${p.wo||''}</td><td>${p.project}</td><td>${p.customer}</td><td>${p.store}</td><td>${p.technician}</td>
+            <td>${p.due_date}</td>
+            <td><span class="status ${p.status}">${p.status.replace(/([A-Z])/g, ' $1').trim()}</span></td>
             <td>${p.observations||''}</td>
         </tr>
-        <tr id="opts-${id}" class="options"><td colspan="9">
-            <button onclick="edit('${id}')">Edit</button>
-            <button onclick="db.child('${id}').remove()">Delete</button>
+        <tr id="opts-${p.id}" class="options"><td colspan="9">
+            <button onclick="edit('${p.id}')">Edit</button>
+            <button onclick="db.child('${p.id}').remove()">Delete</button>
         </td></tr>`;
     });
 });
@@ -140,7 +133,7 @@ function toggle(id){
 function edit(id){
     db.child(id).once('value',s=>{
         const p=s.val();
-        ["project","customer","store","technician","date","due_date","status","observations"].forEach(f=>{
+        ["project","customer","store","technician","due_date","status","wo","observations"].forEach(f=>{
             const v=prompt(`Edit ${f}`,p[f]);if(v)db.child(id+'/'+f).set(v);
         });
     });
