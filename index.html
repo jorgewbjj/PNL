@@ -1,80 +1,136 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Management</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Project Management</title>
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
 
-    <style>
-        body { font-family: 'Roboto', sans-serif; background: #f7f9fc; padding: 20px; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 1200px; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
-        input, select, textarea, button { padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100%; box-sizing: border-box; margin-bottom:10px; }
-        button { background: #0a74da; color: #fff; cursor: pointer; }
-        button:hover { background: #095bb5; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
-        .status { padding: 3px 7px; border-radius: 4px; color: #fff; font-size: 0.8em; }
-        .Planned { background: #6c757d; }
-        .WorkScheduled { background: #17a2b8; }
-        .InProgress { background: #ffc107; }
-        .Completed { background: #28a745; }
-        .expand-btn { cursor: pointer; }
-        .options { display: none; }
-        .arrow { transition: 0.2s ease; }
-        .arrow.open { transform: rotate(90deg); }
-    </style>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #f7f9fc;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    input, select, textarea, button {
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    button {
+      background: #0a74da;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #095bb5;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+    }
+
+    .status {
+      padding: 3px 7px;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 0.8em;
+      cursor: pointer;
+    }
+
+    .Planned { background: #6c757d; }
+    .WorkScheduled { background: #17a2b8; }
+    .InProgress { background: #ffc107; }
+    .Completed { background: #28a745; }
+
+    .expand-btn { cursor: pointer; }
+    .options { display: none; }
+    .arrow { transition: 0.2s ease; }
+    .arrow.open { transform: rotate(90deg); }
+  </style>
 </head>
 <body>
 <div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2>Project Management</h2>
-        <button onclick="window.open('calendar.html','_blank')">📅 Calendar View</button>
-    </div>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h2>Project Management</h2>
+    <button onclick="window.open('calendar.html','_blank')">📅 Calendar View</button>
+  </div>
 
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <input id="project" placeholder="Project" style="flex:2;">
-        <select id="customer" style="flex:1;">
-            <option disabled selected>Customer</option>
-            <option>Jube MNG</option><option>IBS Roofing</option><option>Zurix</option><option value="new">➕ Add Customer</option>
-        </select>
-        <input id="store" placeholder="Store" style="flex:1;">
-        <select id="technician" style="flex:1;">
-            <option disabled selected>Technician</option>
-            <option>Arister</option><option>Elias</option><option>Gavino</option><option>David Romero</option><option value="new">➕ Add Technician</option>
-        </select>
-        <input id="due_date" type="date" style="flex:1;">
-        <select id="status" style="flex:1;">
-            <option value="Planned">Planned</option>
-            <option value="WorkScheduled">Work Scheduled</option>
-            <option value="InProgress">In Progress</option>
-            <option value="Completed">Completed</option>
-        </select>
-        <input id="wo" placeholder="WO #" style="flex:1;">
-        <textarea id="observations" placeholder="Observations" style="flex:3;height:38px;"></textarea>
-        <button onclick="addProject()" style="flex:0.5;">Add</button>
-    </div>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <input id="project" placeholder="Project" style="flex: 2;" />
+    <select id="customer" style="flex: 1;">
+      <option disabled selected>Customer</option>
+      <option>Jube MNG</option>
+      <option>IBS Roofing</option>
+      <option>Zurix</option>
+      <option value="new">➕ Add Customer</option>
+    </select>
+    <input id="store" placeholder="Store" style="flex: 1;" />
+    <select id="technician" style="flex: 1;">
+      <option disabled selected>Technician</option>
+      <option>Arister</option>
+      <option>Elias</option>
+      <option>Gavino</option>
+      <option>David Romero</option>
+      <option value="new">➕ Add Technician</option>
+    </select>
+    <input id="due_date" type="date" style="flex: 1;" />
+    <select id="status" style="flex: 1;">
+      <option value="Planned">Planned</option>
+      <option value="WorkScheduled">Work Scheduled</option>
+      <option value="InProgress">In Progress</option>
+      <option value="Completed">Completed</option>
+    </select>
+    <input id="wo" placeholder="WO #" style="flex: 1;" />
+    <textarea id="observations" placeholder="Observations" style="flex: 3; height: 38px;"></textarea>
+    <button onclick="addProject()" style="flex: 0.5;">Add</button>
+  </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th></th><th>WO #</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
-                <th>Due Date</th><th>Status</th><th>Notes</th>
-            </tr>
-        </thead>
-        <tbody id="list"></tbody>
-    </table>
+  <table>
+    <thead>
+      <tr>
+        <th></th><th>WO #</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
+        <th>Due Date</th><th>Status</th><th>Notes</th>
+      </tr>
+    </thead>
+    <tbody id="list"></tbody>
+  </table>
 </div>
 
 <script>
-
 const firebaseConfig = {
   apiKey: "AIzaSyCgSkYIvenfEzyjef50OD01Ox9et-nyBMo",
   authDomain: "fluxo-6d716.firebaseapp.com",
@@ -84,69 +140,89 @@ const firebaseConfig = {
   messagingSenderId: "761253335013",
   appId: "1:761253335013:web:44c30372a4749203a3690c"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database().ref('projects');
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database().ref('projects');
 
-function addProject() {
-    const ids=["project","customer","store","technician","due_date","status","wo","observations"];
-    const data={};
-    ids.forEach(id=>data[id]=document.getElementById(id).value);
-    if(ids.slice(0,6).every(id=>data[id])){
-        db.push(data);
-        ids.forEach(id=>document.getElementById(id).value="");
-    }else alert("Fill required fields.");
-}
+  function addProject() {
+    const ids = ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"];
+    const data = {};
+    ids.forEach(id => data[id] = document.getElementById(id).value);
+    if (ids.slice(0, 6).every(id => data[id])) {
+      db.push(data);
+      ids.forEach(id => document.getElementById(id).value = "");
+    } else {
+      alert("Fill required fields.");
+    }
+  }
 
-db.on('value', snap => {
+  db.on('value', snap => {
     const tbody = document.getElementById('list');
     tbody.innerHTML = "";
     const projects = [];
     snap.forEach(c => {
-        projects.push({...c.val(), id:c.key});
+      projects.push({ ...c.val(), id: c.key });
     });
-    projects.sort((a,b)=> new Date(a.due_date)-new Date(b.due_date));
-    projects.forEach(p=>{
-        tbody.innerHTML+=`
+    projects.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+    projects.forEach(p => {
+      tbody.innerHTML += `
         <tr data-id="${p.id}">
-            <td class="expand-btn" onclick="toggle('${p.id}')">
-                <span class="arrow" id="arrow-${p.id}">▶️</span>
-            </td>
-            <td>${p.wo||''}</td><td>${p.project}</td><td>${p.customer}</td><td>${p.store}</td><td>${p.technician}</td>
-            <td>${p.due_date}</td>
-            <td><span class="status ${p.status}">${p.status.replace(/([A-Z])/g, ' $1').trim()}</span></td>
-            <td>${p.observations||''}</td>
+          <td class="expand-btn" onclick="toggle('${p.id}')">
+            <span class="arrow" id="arrow-${p.id}">▶️</span>
+          </td>
+          <td>${p.wo || ''}</td>
+          <td>${p.project}</td>
+          <td>${p.customer}</td>
+          <td>${p.store}</td>
+          <td>${p.technician}</td>
+          <td>${p.due_date}</td>
+          <td><span class="status ${p.status}" onclick="changeStatus('${p.id}', '${p.status}')">${p.status.replace(/([A-Z])/g, ' $1').trim()}</span></td>
+          <td>${p.observations || ''}</td>
         </tr>
         <tr id="opts-${p.id}" class="options"><td colspan="9">
-            <button onclick="edit('${p.id}')">Edit</button>
-            <button onclick="db.child('${p.id}').remove()">Delete</button>
+          <button onclick="edit('${p.id}')">Edit</button>
+          <button onclick="db.child('${p.id}').remove()">Delete</button>
         </td></tr>`;
     });
-});
+  });
 
-function toggle(id){
-    const opts=document.getElementById('opts-'+id);
-    const arrow=document.getElementById('arrow-'+id);
-    opts.style.display=opts.style.display=='table-row'?'none':'table-row';
+  function toggle(id) {
+    const opts = document.getElementById('opts-' + id);
+    const arrow = document.getElementById('arrow-' + id);
+    opts.style.display = opts.style.display === 'table-row' ? 'none' : 'table-row';
     arrow.classList.toggle('open');
-}
+  }
 
-function edit(id){
-    db.child(id).once('value',s=>{
-        const p=s.val();
-        ["project","customer","store","technician","due_date","status","wo","observations"].forEach(f=>{
-            const v=prompt(`Edit ${f}`,p[f]);if(v)db.child(id+'/'+f).set(v);
-        });
+  function edit(id) {
+    db.child(id).once('value', s => {
+      const p = s.val();
+      ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"].forEach(f => {
+        const v = prompt(`Edit ${f}`, p[f]);
+        if (v) db.child(id + '/' + f).set(v);
+      });
     });
-}
+  }
 
-['customer','technician'].forEach(type=>{
-    document.getElementById(type).onchange=function(){
-        if(this.value=="new"){
-            const n=prompt(`New ${type}:`);
-            if(n)this.insertBefore(new Option(n,n,true,true),this.lastChild);
-        }
+  function changeStatus(id, currentStatus) {
+    const statusList = ["Planned", "WorkScheduled", "InProgress", "Completed"];
+    const newStatus = prompt(`New status:\n${statusList.join(", ")}`, currentStatus);
+    if (newStatus && statusList.includes(newStatus)) {
+      db.child(id + '/status').set(newStatus);
+
+      if (newStatus === "WorkScheduled") {
+        const newDate = prompt("Select the scheduled date (YYYY-MM-DD):");
+        if (newDate) db.child(id + '/due_date').set(newDate);
+      }
+    }
+  }
+
+  ['customer', 'technician'].forEach(type => {
+    document.getElementById(type).onchange = function () {
+      if (this.value === "new") {
+        const n = prompt(`New ${type}:`);
+        if (n) this.insertBefore(new Option(n, n, true, true), this.lastChild);
+      }
     };
-});
+  });
 </script>
 </body>
 </html>
