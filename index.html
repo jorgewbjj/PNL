@@ -1,12 +1,11 @@
 
-
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Management</title>
-    
+
     <!-- Firebase CDN -->
     <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
@@ -19,85 +18,90 @@
             font-family: 'Roboto', sans-serif;
             background-color: #f7f9fc;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
         }
 
         .container {
-            width: 85%;
-            max-width: 900px;
-            margin-top: 30px;
+            width: 95%;
+            max-width: 1200px;
         }
 
         h1 {
-            color: #333;
-            font-weight: 500;
             text-align: center;
+            font-weight: 500;
+            color: #333;
         }
 
         .form-container {
-            background-color: #fff;
-            padding: 20px;
+            background: #fff;
+            padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        input, select, textarea {
-            width: 100%;
+        .form-container input, .form-container select, .form-container textarea {
+            flex: 1;
+            min-width: 180px;
             padding: 8px;
-            margin-bottom: 10px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
 
-        textarea {
-            resize: vertical;
-        }
-
         button {
-            padding: 10px;
+            padding: 8px 16px;
             background-color: #0a74da;
             color: #fff;
             border: none;
             border-radius: 4px;
             cursor: pointer;
+            flex-shrink: 0;
         }
 
         button:hover {
             background-color: #095bb5;
         }
 
-        .project {
-            background-color: #fff;
-            padding: 15px;
+        .project-list {
+            background: #fff;
+            padding: 10px;
             border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9em;
+        }
+
+        th {
+            background-color: #f1f5fa;
+            color: #555;
         }
 
         .status {
-            display: inline-block;
             padding: 3px 7px;
             border-radius: 4px;
             color: #fff;
-            font-size: 0.85em;
+            font-size: 0.8em;
         }
 
         .Planned { background-color: #6c757d; }
         .InProgress { background-color: #ffc107; }
         .Completed { background-color: #28a745; }
-
-        .details {
-            font-size: 0.9em;
-            color: #555;
-            margin-top: 5px;
-        }
-
-        @media(max-width: 600px){
-            .container{ width: 95%; }
-        }
     </style>
 </head>
 <body>
@@ -109,24 +113,41 @@
         <input type="text" id="customer" placeholder="Customer">
         <input type="text" id="store" placeholder="Store">
         <input type="text" id="technician" placeholder="Technician">
-        <label for="date">Start Date</label>
-        <input type="date" id="date">
-        <label for="due_date">Due Date</label>
-        <input type="date" id="due_date">
+        <input type="date" id="date" placeholder="Start Date">
+        <input type="date" id="due_date" placeholder="Due Date">
         <select id="status">
             <option value="Planned">Planned</option>
             <option value="InProgress">In Progress</option>
             <option value="Completed">Completed</option>
         </select>
-        <textarea id="observations" rows="3" placeholder="Observations"></textarea>
-        <button onclick="addProject()">Add Project</button>
+        <textarea id="observations" rows="1" placeholder="Observations"></textarea>
+        <button onclick="addProject()">Add</button>
     </div>
 
-    <div id="project-list"></div>
+    <div class="project-list">
+        <table>
+            <thead>
+                <tr>
+                    <th>Project</th>
+                    <th>Customer</th>
+                    <th>Store</th>
+                    <th>Technician</th>
+                    <th>Start Date</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Observations</th>
+                </tr>
+            </thead>
+            <tbody id="project-table">
+                <!-- Projects will load here -->
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    // Replace with your own Firebase config
+    // Replace these with your Firebase configuration details
+
 const firebaseConfig = {
   apiKey: "AIzaSyCgSkYIvenfEzyjef50OD01Ox9et-nyBMo",
   authDomain: "fluxo-6d716.firebaseapp.com",
@@ -137,7 +158,6 @@ const firebaseConfig = {
   appId: "1:761253335013:web:44c30372a4749203a3690c"
 };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -152,46 +172,44 @@ const firebaseConfig = {
         const observations = document.getElementById('observations').value;
 
         if (project && customer && store && technician && date && due_date && status) {
-            const newProject = {
+            const projectData = {
                 project, customer, store, technician, date, due_date, status, observations
             };
 
-            db.ref('projects').push(newProject);
-
-            document.querySelectorAll('.form-container input, .form-container textarea').forEach(el => el.value = '');
+            db.ref('projects').push(projectData);
+            document.querySelectorAll('.form-container input, .form-container textarea').forEach(input => input.value = '');
             document.getElementById('status').value = 'Planned';
         } else {
-            alert("Please fill out all required fields.");
+            alert("Please fill in all required fields.");
         }
     }
 
-    function listProjects() {
+    function loadProjects() {
         db.ref('projects').on('value', snapshot => {
             const projects = snapshot.val();
-            const list = document.getElementById('project-list');
-            list.innerHTML = '';
+            const table = document.getElementById('project-table');
+            table.innerHTML = '';
 
             for (let id in projects) {
                 const p = projects[id];
-                list.innerHTML += `
-                    <div class="project">
-                        <strong>${p.project}</strong> 
-                        <span class="status ${p.status.replace(' ', '')}">${p.status}</span>
-                        <div class="details">
-                            <p><strong>Customer:</strong> ${p.customer}</p>
-                            <p><strong>Store:</strong> ${p.store}</p>
-                            <p><strong>Technician:</strong> ${p.technician}</p>
-                            <p><strong>Start Date:</strong> ${p.date}</p>
-                            <p><strong>Due Date:</strong> ${p.due_date}</p>
-                            <p><strong>Observations:</strong> ${p.observations || "None"}</p>
-                        </div>
-                    </div>
+                table.innerHTML += `
+                    <tr>
+                        <td>${p.project}</td>
+                        <td>${p.customer}</td>
+                        <td>${p.store}</td>
+                        <td>${p.technician}</td>
+                        <td>${p.date}</td>
+                        <td>${p.due_date}</td>
+                        <td><span class="status ${p.status.replace(' ', '')}">${p.status}</span></td>
+                        <td>${p.observations || '-'}</td>
+                    </tr>
                 `;
             }
         });
     }
 
-    window.onload = listProjects;
+    window.onload = loadProjects;
 </script>
+
 </body>
 </html>
