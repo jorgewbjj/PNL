@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Calendar View</title>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
+
+    <!-- FullCalendar CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f7f9fc;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Scheduled Work - Calendar View</h2>
+    <div id='calendar'></div>
+</div>
+
+<script>
+    // Firebase configuration (same as your main page)
+const firebaseConfig = {
+  apiKey: "AIzaSyCgSkYIvenfEzyjef50OD01Ox9et-nyBMo",
+  authDomain: "fluxo-6d716.firebaseapp.com",
+  databaseURL: "https://fluxo-6d716-default-rtdb.firebaseio.com",
+  projectId: "fluxo-6d716",
+  storageBucket: "fluxo-6d716.firebasestorage.app",
+  messagingSenderId: "761253335013",
+  appId: "1:761253335013:web:44c30372a4749203a3690c"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database().ref('projects');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarEl = document.getElementById('calendar');
+
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            editable: false,
+            events: []  // Initially empty
+        });
+
+        calendar.render();
+
+        // Fetch and render only projects with status "In Progress" (or "Work Scheduled")
+        db.on('value', snap => {
+            const events = [];
+            snap.forEach(child => {
+                const proj = child.val();
+                if (proj.status === "InProgress" || proj.status === "Work Scheduled") {
+                    events.push({
+                        title: proj.project + ' (' + proj.customer + ')',
+                        start: proj.date,
+                        end: proj.due_date ? new Date(new Date(proj.due_date).getTime() + 86400000).toISOString().split('T')[0] : proj.date,
+                        color: '#0a74da'
+                    });
+                }
+            });
+            calendar.removeAllEvents();
+            calendar.addEventSource(events);
+        });
+    });
+</script>
+</body>
+</html>
