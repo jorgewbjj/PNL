@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,64 +6,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Management</title>
 
-    <!-- Firebase CDN -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 
     <style>
-        body { font-family: 'Roboto', sans-serif; background-color: #f7f9fc; padding: 20px; }
-        .container { max-width:1200px; margin: auto; }
-        input, select, textarea, button { padding:8px; border-radius:4px; border:1px solid #ccc; }
-        button { background:#0a74da; color:white; cursor:pointer; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f7f9fc;
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center;
+        }
+        .container {
+            width: 100%; max-width: 1200px;
+            background: #fff; border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding:20px;
+        }
+        h2 { margin-bottom:15px; color:#333; }
+        input, select, textarea {
+            width: 100%; padding: 8px;
+            border-radius:4px; border:1px solid #ddd;
+            box-sizing: border-box; margin-bottom:10px;
+        }
+        button {
+            padding:8px 15px; background:#0a74da; color:#fff;
+            border:none; border-radius:4px; cursor:pointer;
+        }
         button:hover { background:#095bb5; }
-
-        table { width:100%; border-collapse:collapse; margin-top:15px; }
-        th, td { padding:8px; border-bottom:1px solid #eee; }
-        th { background-color:#f1f5fa; }
-
-        .controls { visibility:hidden; display:flex; gap:5px; }
-        tr:hover .controls { visibility:visible; }
-
-        .status { padding:3px 7px; border-radius:4px; color:white; font-size:0.8em; }
-        .Planned { background:#6c757d; }
-        .InProgress { background:#ffc107; }
-        .Completed { background:#28a745; }
+        table { width:100%; border-collapse:collapse; }
+        th, td { padding:8px; text-align:left; border-bottom:1px solid #eee; }
+        .status { padding:3px 7px; border-radius:4px; color:#fff; font-size:0.8em; }
+        .Planned{background:#6c757d}.InProgress{background:#ffc107}.Completed{background:#28a745}
+        .options { display:none; gap:5px; }
+        .expand-btn { cursor:pointer; }
+        .arrow { transition:0.2s ease; }
+        .arrow.open { transform:rotate(90deg); }
     </style>
 </head>
 <body>
 <div class="container">
     <h2>Project Management</h2>
-    <div>
-        <input id="project" placeholder="Project">
-        <select id="customer">
-            <option disabled selected>Select Customer</option>
-            <option>Jube MNG</option><option>IBS Roofing</option><option>Zurix</option><option value="__new">Add Customer</option>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <input id="project" placeholder="Project" style="flex:2;">
+        <select id="customer" style="flex:1;">
+            <option disabled selected>Customer</option>
+            <option>Jube MNG</option><option>IBS Roofing</option><option>Zurix</option><option value="new">➕ Add Customer</option>
         </select>
-        <input id="store" placeholder="Store">
-        <select id="technician">
-            <option disabled selected>Select Technician</option>
-            <option>Arister</option><option>Elias</option><option>Gavino</option><option>David Romero</option><option value="__new">Add Technician</option>
+        <input id="store" placeholder="Store" style="flex:1;">
+        <select id="technician" style="flex:1;">
+            <option disabled selected>Technician</option>
+            <option>Arister</option><option>Elias</option><option>Gavino</option><option>David Romero</option><option value="new">➕ Add Technician</option>
         </select>
-        <input id="date" type="date">
-        <input id="due_date" type="date">
-        <select id="status">
+        <input id="date" type="date" style="flex:1;">
+        <input id="due_date" type="date" style="flex:1;">
+        <select id="status" style="flex:1;">
             <option value="Planned">Planned</option><option value="InProgress">In Progress</option><option value="Completed">Completed</option>
         </select>
-        <textarea id="observations" placeholder="Observations"></textarea>
-        <button onclick="addProject()">Add</button>
+        <textarea id="observations" placeholder="Observations" style="flex:3;height:38px;"></textarea>
+        <button onclick="addProject()" style="flex:0.5;">Add</button>
     </div>
 
-    <table id="project-list">
+    <table>
         <thead>
             <tr>
-                <th>☰</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
-                <th>Start</th><th>Due</th><th>Status</th><th>Observations</th>
+                <th></th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
+                <th>Start</th><th>Due</th><th>Status</th><th>Notes</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="list"></tbody>
     </table>
 </div>
 
@@ -79,75 +91,63 @@ const firebaseConfig = {
   appId: "1:761253335013:web:44c30372a4749203a3690c"
 };
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
+const db=firebase.database().ref('projects');
 
 function addProject(){
+    const ids=["project","customer","store","technician","date","due_date","status","observations"];
     const data={};
-    ["project","customer","store","technician","date","due_date","status","observations"].forEach(id=>data[id]=document.getElementById(id).value);
-    if(Object.values(data).slice(0,6).every(Boolean)){
-        db.ref('projects').push(data);
-        document.querySelectorAll("input,textarea,select").forEach(el=>el.value="");
-    } else alert("Fill required fields.");
+    ids.forEach(id=>data[id]=document.getElementById(id).value);
+    if(ids.slice(0,6).every(id=>data[id])){
+        db.push(data);
+        ids.forEach(id=>document.getElementById(id).value="");
+    }else alert("Fill required fields.");
 }
 
-function loadProjects(){
-    db.ref('projects').on('value',snap=>{
-        const tbody=document.querySelector('#project-list tbody'); tbody.innerHTML="";
-        snap.forEach(child=>{
-            const p=child.val(),id=child.key;
-            tbody.innerHTML+=`
-            <tr data-id="${id}">
-                <td class="controls">
-                    <button onclick="editProject('${id}')">✏️</button>
-                    <button onclick="deleteProject('${id}')">🗑️</button>
-                    <button onclick="moveUp('${id}')">⬆️</button>
-                    <button onclick="moveDown('${id}')">⬇️</button>
-                </td>
-                <td>${p.project}</td><td>${p.customer}</td><td>${p.store}</td>
-                <td>${p.technician}</td><td>${p.date}</td><td>${p.due_date}</td>
-                <td><span class="status ${p.status.replace(' ','')}">${p.status}</span></td>
-                <td>${p.observations||'-'}</td>
-            </tr>`;
+db.on('value',snap=>{
+    const tbody=document.getElementById('list');tbody.innerHTML="";
+    snap.forEach(c=>{
+        const p=c.val(),id=c.key;
+        tbody.innerHTML+=`
+        <tr data-id="${id}">
+            <td class="expand-btn" onclick="toggle('${id}')">
+                <span class="arrow" id="arrow-${id}">▶️</span>
+            </td>
+            <td>${p.project}</td><td>${p.customer}</td><td>${p.store}</td><td>${p.technician}</td>
+            <td>${p.date}</td><td>${p.due_date}</td>
+            <td><span class="status ${p.status.replace(' ','')}">${p.status}</span></td>
+            <td>${p.observations||''}</td>
+        </tr>
+        <tr id="opts-${id}" class="options"><td colspan="9">
+            <button onclick="edit('${id}')">Edit</button>
+            <button onclick="db.child('${id}').remove()">Delete</button>
+        </td></tr>`;
+    });
+});
+
+function toggle(id){
+    const opts=document.getElementById('opts-'+id);
+    const arrow=document.getElementById('arrow-'+id);
+    opts.style.display=opts.style.display=='table-row'?'none':'table-row';
+    arrow.classList.toggle('open');
+}
+
+function edit(id){
+    db.child(id).once('value',s=>{
+        const p=s.val();
+        ["project","customer","store","technician","date","due_date","status","observations"].forEach(f=>{
+            const v=prompt(`Edit ${f}`,p[f]);if(v)db.child(id+'/'+f).set(v);
         });
     });
 }
 
-function deleteProject(id){ db.ref(`projects/${id}`).remove(); }
-
-function editProject(id){
-    const row=document.querySelector(`[data-id='${id}']`).children;
-    const data=["project","customer","store","technician","date","due_date","status","observations"];
-    data.forEach((el,i)=>{
-        const val=prompt(`Edit ${el}`,row[i+1].innerText);
-        if(val) db.ref(`projects/${id}/${el}`).set(val);
-    });
-}
-
-function swapNodes(n1,n2){n1.parentNode.insertBefore(n1,n2);}
-
-function moveUp(id){
-    const row=document.querySelector(`[data-id='${id}']`);
-    if(row.previousElementSibling) swapNodes(row,row.previousElementSibling);
-}
-
-function moveDown(id){
-    const row=document.querySelector(`[data-id='${id}']`);
-    if(row.nextElementSibling) swapNodes(row.nextElementSibling,row);
-}
-
-window.onload=loadProjects;
-
-document.getElementById('customer').onchange=function(){
-    if(this.value=="__new"){
-        const n=prompt("New customer:"); if(n)this.insertBefore(new Option(n,n,true,true),this.lastChild);
-    }
-};
-
-document.getElementById('technician').onchange=function(){
-    if(this.value=="__new"){
-        const n=prompt("New technician:"); if(n)this.insertBefore(new Option(n,n,true,true),this.lastChild);
-    }
-};
+['customer','technician'].forEach(type=>{
+    document.getElementById(type).onchange=function(){
+        if(this.value=="new"){
+            const n=prompt(`New ${type}:`);
+            if(n)this.insertBefore(new Option(n,n,true,true),this.lastChild);
+        }
+    };
+});
 </script>
 </body>
 </html>
