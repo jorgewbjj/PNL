@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,110 +15,60 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f7f9fc;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
+        body { font-family: 'Roboto', sans-serif; background-color: #f7f9fc; padding: 20px; }
+        .container { max-width:1200px; margin: auto; }
+        input, select, textarea, button { padding:8px; border-radius:4px; border:1px solid #ccc; }
+        button { background:#0a74da; color:white; cursor:pointer; }
+        button:hover { background:#095bb5; }
 
-        .container {
-            width: 95%;
-            max-width: 1200px;
-        }
+        table { width:100%; border-collapse:collapse; margin-top:15px; }
+        th, td { padding:8px; border-bottom:1px solid #eee; }
+        th { background-color:#f1f5fa; }
 
-        h1 { text-align: center; color: #333; }
+        .controls { visibility:hidden; display:flex; gap:5px; }
+        tr:hover .controls { visibility:visible; }
 
-        .form-container {
-            background: #fff; padding: 15px; border-radius: 8px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1); margin-bottom: 20px;
-            display: flex; gap: 10px; flex-wrap: wrap;
-        }
-
-        input, select, textarea {
-            flex: 1; min-width: 180px; padding: 8px;
-            border: 1px solid #ddd; border-radius: 4px;
-        }
-
-        button {
-            padding: 8px 16px; background-color: #0a74da;
-            color: #fff; border: none; border-radius: 4px;
-            cursor: pointer; flex-shrink: 0;
-        }
-
-        button:hover { background-color: #095bb5; }
-
-        .project-list { background: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow-x: auto; }
-
-        table { width: 100%; border-collapse: collapse; }
-
-        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9em; }
-
-        th { background-color: #f1f5fa; color: #555; }
-
-        .status { padding: 3px 7px; border-radius: 4px; color: #fff; font-size: 0.8em; }
-
-        .Planned { background-color: #6c757d; }
-        .InProgress { background-color: #ffc107; }
-        .Completed { background-color: #28a745; }
+        .status { padding:3px 7px; border-radius:4px; color:white; font-size:0.8em; }
+        .Planned { background:#6c757d; }
+        .InProgress { background:#ffc107; }
+        .Completed { background:#28a745; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Project Management</h1>
-
-    <div class="form-container">
-        <input type="text" id="project" placeholder="Project Name">
-
+    <h2>Project Management</h2>
+    <div>
+        <input id="project" placeholder="Project">
         <select id="customer">
-            <option disabled selected value="">Select Customer</option>
-            <option>Jube MNG</option>
-            <option>IBS Roofing</option>
-            <option>Zurix</option>
-            <option value="__new">➕ Add Customer...</option>
+            <option disabled selected>Select Customer</option>
+            <option>Jube MNG</option><option>IBS Roofing</option><option>Zurix</option><option value="__new">Add Customer</option>
         </select>
-
-        <input type="text" id="store" placeholder="Store">
-
+        <input id="store" placeholder="Store">
         <select id="technician">
-            <option disabled selected value="">Select Technician</option>
-            <option>Arister</option>
-            <option>Elias</option>
-            <option>Gavino</option>
-            <option>David Romero</option>
-            <option value="__new">➕ Add Technician...</option>
+            <option disabled selected>Select Technician</option>
+            <option>Arister</option><option>Elias</option><option>Gavino</option><option>David Romero</option><option value="__new">Add Technician</option>
         </select>
-
-        <input type="date" id="date" placeholder="Start Date">
-        <input type="date" id="due_date" placeholder="Due Date">
-
+        <input id="date" type="date">
+        <input id="due_date" type="date">
         <select id="status">
-            <option value="Planned">Planned</option>
-            <option value="InProgress">In Progress</option>
-            <option value="Completed">Completed</option>
+            <option value="Planned">Planned</option><option value="InProgress">In Progress</option><option value="Completed">Completed</option>
         </select>
-
-        <textarea id="observations" rows="1" placeholder="Observations"></textarea>
+        <textarea id="observations" placeholder="Observations"></textarea>
         <button onclick="addProject()">Add</button>
     </div>
 
-    <div class="project-list">
-        <table>
-            <thead>
-                <tr>
-                    <th>Project</th><th>Customer</th><th>Store</th><th>Technician</th><th>Start Date</th>
-                    <th>Due Date</th><th>Status</th><th>Observations</th>
-                </tr>
-            </thead>
-            <tbody id="project-table"></tbody>
-        </table>
-    </div>
+    <table id="project-list">
+        <thead>
+            <tr>
+                <th>☰</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
+                <th>Start</th><th>Due</th><th>Status</th><th>Observations</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
 </div>
 
 <script>
-    // Replace with your Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCgSkYIvenfEzyjef50OD01Ox9et-nyBMo",
   authDomain: "fluxo-6d716.firebaseapp.com",
@@ -127,64 +78,76 @@ const firebaseConfig = {
   messagingSenderId: "761253335013",
   appId: "1:761253335013:web:44c30372a4749203a3690c"
 };
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+function addProject(){
+    const data={};
+    ["project","customer","store","technician","date","due_date","status","observations"].forEach(id=>data[id]=document.getElementById(id).value);
+    if(Object.values(data).slice(0,6).every(Boolean)){
+        db.ref('projects').push(data);
+        document.querySelectorAll("input,textarea,select").forEach(el=>el.value="");
+    } else alert("Fill required fields.");
+}
 
-    function promptNewEntry(type) {
-        const newEntry = prompt(`Enter new ${type}:`);
-        if(newEntry) {
-            const select = document.getElementById(type.toLowerCase());
-            const newOption = new Option(newEntry, newEntry, true, true);
-            select.insertBefore(newOption, select.lastElementChild);
-        } else {
-            select.value = "";
-        }
-    }
-
-    document.getElementById('customer').addEventListener('change', function(){
-        if(this.value === "__new") promptNewEntry('Customer');
-    });
-
-    document.getElementById('technician').addEventListener('change', function(){
-        if(this.value === "__new") promptNewEntry('Technician');
-    });
-
-    function addProject() {
-        const fields = ['project','customer','store','technician','date','due_date','status','observations'];
-        const data = {};
-        for(let id of fields) {
-            data[id] = document.getElementById(id).value;
-        }
-
-        if(fields.slice(0,6).every(id => data[id])) {
-            db.ref('projects').push(data);
-            document.querySelectorAll('.form-container input, .form-container textarea').forEach(e => e.value='');
-            document.querySelectorAll('.form-container select').forEach(s => s.selectedIndex=0);
-        } else alert("Please fill all required fields.");
-    }
-
-    function loadProjects() {
-        db.ref('projects').on('value', snapshot => {
-            const projects = snapshot.val();
-            const table = document.getElementById('project-table');
-            table.innerHTML = '';
-
-            for (let id in projects) {
-                const p = projects[id];
-                table.innerHTML += `
-                    <tr>
-                        <td>${p.project}</td><td>${p.customer}</td><td>${p.store}</td><td>${p.technician}</td>
-                        <td>${p.date}</td><td>${p.due_date}</td>
-                        <td><span class="status ${p.status.replace(' ', '')}">${p.status}</span></td>
-                        <td>${p.observations || '-'}</td>
-                    </tr>`;
-            }
+function loadProjects(){
+    db.ref('projects').on('value',snap=>{
+        const tbody=document.querySelector('#project-list tbody'); tbody.innerHTML="";
+        snap.forEach(child=>{
+            const p=child.val(),id=child.key;
+            tbody.innerHTML+=`
+            <tr data-id="${id}">
+                <td class="controls">
+                    <button onclick="editProject('${id}')">✏️</button>
+                    <button onclick="deleteProject('${id}')">🗑️</button>
+                    <button onclick="moveUp('${id}')">⬆️</button>
+                    <button onclick="moveDown('${id}')">⬇️</button>
+                </td>
+                <td>${p.project}</td><td>${p.customer}</td><td>${p.store}</td>
+                <td>${p.technician}</td><td>${p.date}</td><td>${p.due_date}</td>
+                <td><span class="status ${p.status.replace(' ','')}">${p.status}</span></td>
+                <td>${p.observations||'-'}</td>
+            </tr>`;
         });
+    });
+}
+
+function deleteProject(id){ db.ref(`projects/${id}`).remove(); }
+
+function editProject(id){
+    const row=document.querySelector(`[data-id='${id}']`).children;
+    const data=["project","customer","store","technician","date","due_date","status","observations"];
+    data.forEach((el,i)=>{
+        const val=prompt(`Edit ${el}`,row[i+1].innerText);
+        if(val) db.ref(`projects/${id}/${el}`).set(val);
+    });
+}
+
+function swapNodes(n1,n2){n1.parentNode.insertBefore(n1,n2);}
+
+function moveUp(id){
+    const row=document.querySelector(`[data-id='${id}']`);
+    if(row.previousElementSibling) swapNodes(row,row.previousElementSibling);
+}
+
+function moveDown(id){
+    const row=document.querySelector(`[data-id='${id}']`);
+    if(row.nextElementSibling) swapNodes(row.nextElementSibling,row);
+}
+
+window.onload=loadProjects;
+
+document.getElementById('customer').onchange=function(){
+    if(this.value=="__new"){
+        const n=prompt("New customer:"); if(n)this.insertBefore(new Option(n,n,true,true),this.lastChild);
     }
+};
 
-    window.onload = loadProjects;
+document.getElementById('technician').onchange=function(){
+    if(this.value=="__new"){
+        const n=prompt("New technician:"); if(n)this.insertBefore(new Option(n,n,true,true),this.lastChild);
+    }
+};
 </script>
-
 </body>
 </html>
