@@ -1,299 +1,367 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Fluxo de Caixa - 24 Meses</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Project Management</title>
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; background: #f5f6fa; margin: 0; padding: 0; min-height: 100vh; }
-    .container { max-width: 98vw; margin: 24px auto; padding: 8px; }
-    h2 { font-weight: 700; font-size: 1.35rem; margin-bottom: 16px; color: #222; letter-spacing: -1px; text-align: center; }
-    .actions-bar { display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
-    #addCategoryBtn { background: #fff; border: 1px solid #007BFF; color: #007BFF; padding: 6px 14px; border-radius: 8px; font-size: 0.98rem; font-weight: 500; cursor: pointer; transition: background 0.1s, color 0.1s; box-shadow: 0 1px 4px #0001; }
-    #addCategoryBtn:hover { background: #007BFF; color: #fff; }
-    .table-container { width: 100%; overflow-x: auto; background: #fff; border-radius: 14px; box-shadow: 0 3px 14px #0001; padding: 8px 0 8px 0; }
-    table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 680px; font-size: 0.98rem; background: #fff; }
-    thead tr { background: #007BFF; color: #fff; }
-    th, td { padding: 5px 8px; border-bottom: 1px solid #e3e7ee; min-width: 74px; text-align: right; white-space: nowrap; }
-    th:first-child, td:first-child { position: sticky; left: 0; background: #f7faff; text-align: left; z-index: 2; min-width: 136px; font-weight: 600; box-shadow: 3px 0 8px -7px #3333; }
-    td[contenteditable="true"] { background-color: #f6faff; border-radius: 7px; outline: none; cursor: pointer; transition: background 0.12s; }
-    td[contenteditable="true"]:focus { background: #e6f0ff; box-shadow: 0 0 0 2px #007bff33; }
-    tfoot tr { background: #f0f6ff; }
-    .tfoot-bold { font-weight: bold !important; background: #e8f0fc !important;}
-    .cat-actions { display: none; align-items: center; gap: 3px; margin-left: 4px; }
-    .cat-btn { background: none; border: none; color: #999; font-size: 1em; cursor: pointer; padding: 1px 4px; border-radius: 3px; transition: color 0.15s, background 0.1s; }
-    .cat-btn:hover { color: #007bff; background: #e7f0ff; }
-    .cat-label { cursor: pointer; user-select: none; }
-    .cat-label.active { color: #007BFF; font-weight: bold; }
-    .dropdown-backdrop {
-      position: fixed; left:0; top:0; right:0; bottom:0; z-index:11; background:transparent;
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; font-family: 'Roboto', sans-serif; background: #f7f9fc; }
+    .container { width: 100vw; min-height: 100vh; padding: 20px; }
+    input, select, textarea, button {
+      padding: 8px; border-radius: 4px; border: 1px solid #ccc;
+      width: 100%; margin-bottom: 10px; font-family: 'Roboto', sans-serif;
     }
-    .dropdown-modal {
-      position: fixed; left:50%; top:18%; transform:translate(-50%,0); z-index:12;
-      background: #fff; border-radius: 10px; box-shadow: 0 4px 24px #007bff10;
-      padding: 28px 20px 18px 20px; min-width:270px; display:flex; flex-direction:column; align-items:center;
-      animation: fadeIn .16s;
+    textarea.notes-cell {
+      min-height: 32px; height: 32px; resize: vertical; width: 100%;
+      border: 1px solid #e0e0e0; font-size: 1em; background: #fcfcfc;
     }
-    @keyframes fadeIn { from{opacity:0;transform:translate(-50%,-20px);} to{opacity:1;transform:translate(-50%,0);} }
-    .dropdown-modal h3 { font-size: 1.08rem; font-weight: 600; color: #222; margin: 0 0 16px 0;}
-    .dropdown-modal input[type="text"] { width:100%; padding: 7px; border-radius: 7px; border: 1px solid #ccc; margin-bottom:12px; font-size:1rem;}
-    .dropdown-modal select { width:100%; padding:7px; border-radius:7px; border:1px solid #ccc; font-size:1rem; margin-bottom:12px;}
-    .dropdown-modal button { background:#007BFF; border:none; color:#fff; border-radius:6px; padding:7px 18px; font-size:1rem; font-weight:500; cursor:pointer;}
-    .dropdown-modal button:hover { background:#005fd1; }
-    @media (max-width: 760px) {
-      .container { max-width: 99vw; margin: 0; padding: 2px; }
-      h2 { font-size: 1rem; }
-      th, td { min-width: 56px; font-size: 0.93rem; padding: 4px 4px; }
-      th:first-child, td:first-child { min-width: 95px; }
-      .table-container { padding: 0; }
-      .dropdown-modal { min-width: 93vw; }
+    button { background: #0a74da; color: #fff; cursor: pointer; }
+    button:hover { background: #095bb5; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
+    .expand-btn { cursor: pointer; width:32px; }
+    .options { display: none; background:#f5f5f5;}
+    .arrow { transition: 0.2s ease; }
+    .arrow.open { transform: rotate(90deg); }
+    #datePopup {
+      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: white; padding: 20px; border: 1px solid #ccc;
+      border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000;
     }
-    #chart { margin-top: 16px; max-width: 99vw; background: #fff; border-radius: 14px; box-shadow: 0 2px 14px #0001; padding: 10px 0; min-height: 120px; }
+    #overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.3); z-index: 999;
+    }
+    .section { margin-top: 24px; }
+    .toggle-link {
+      color: #0a74da;
+      background: none;
+      border: none;
+      padding: 0 8px;
+      font-size: 0.98em;
+      text-align: right;
+      cursor: pointer;
+      float: right;
+      margin-bottom: 0;
+    }
+    .toggle-link:focus, .toggle-link:hover { text-decoration: underline; background: none; }
+    .hidden { display: none; }
+    .section h3 { margin: 0 0 8px 0; display: inline-block; font-size: 1.06em; }
+    @media (max-width: 800px) {
+      .container { padding: 8px; }
+      th, td { padding: 4px; font-size: 0.95em; }
+      input, select, textarea, button { font-size: 1em; }
+    }
+    .action-btn {
+      background: none; border: none; color: #0a74da; font-size: 0.98em; cursor: pointer;
+      padding: 2px 6px; margin-right: 3px; border-radius: 3px;
+    }
+    .action-btn:hover { background: #e0ecfa; }
+    .option-cell { width:90px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Fluxo de Caixa — 24 Meses</h2>
-    <div class="actions-bar">
-      <button id="addCategoryBtn">+ Adicionar Categoria</button>
-    </div>
-    <div class="table-container">
-      <table id="cashFlowTable">
+<div id="overlay"></div>
+<div id="datePopup">
+  <h3>Select Work Scheduled Date</h3>
+  <input type="date" id="popupDate" />
+  <br><br>
+  <button onclick="confirmDate()">Confirm</button>
+  <button onclick="closePopup()">Cancel</button>
+</div>
+
+<div class="container">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h2 style="margin:0;">Project Management</h2>
+    <button onclick="window.open('calendar.html','_blank')" style="min-width:44px;">📅 Calendar View</button>
+  </div>
+
+  <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+    <input id="project" placeholder="Project" style="flex: 2;" />
+    <select id="customer" style="flex: 1;">
+      <option value="" disabled selected>Customer</option>
+      <option>Jube MNG</option>
+      <option>IBS Roofing</option>
+      <option>Zurix</option>
+      <option value="new">➕ Add Customer</option>
+    </select>
+    <input id="store" placeholder="Store" style="flex: 1;" />
+    <select id="technician" style="flex: 1;">
+      <option value="" disabled selected>Technician</option>
+      <option>Arister</option>
+      <option>Elias</option>
+      <option>Gavino</option>
+      <option>David Romero</option>
+      <option value="new">➕ Add Technician</option>
+    </select>
+    <input id="due_date" type="date" style="flex: 1;" />
+    <select id="status" style="flex: 1;">
+      <option value="" disabled selected>Status</option>
+      <option value="Needs Estimate">Needs Estimate</option>
+      <option value="Needs to Schedule">Needs to Schedule</option>
+      <option value="Work Scheduled">Work Scheduled</option>
+      <option value="Done">Done</option>
+      <option value="Paid">Paid</option>
+    </select>
+    <input id="wo" placeholder="WO #" style="flex: 1;" />
+    <textarea id="observations" placeholder="Observations" style="flex: 3; height: 38px;"></textarea>
+    <button onclick="addProject()" style="flex: 0.5;">Add</button>
+  </div>
+
+  <div class="section">
+    <h3>Active Projects</h3>
+    <table>
+      <thead>
+        <tr>
+          <th></th><th>WO #</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
+          <th>Due Date</th><th>Status</th><th>Notes</th><th class="option-cell"></th>
+        </tr>
+      </thead>
+      <tbody id="list"></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <button class="toggle-link" id="doneToggle" onclick="toggleSection('doneSection', this)">Show Done Projects</button>
+    <div id="doneSection" class="hidden">
+      <h3>Done Projects</h3>
+      <table>
         <thead>
           <tr>
-            <th>Categoria</th>
+            <th></th><th>WO #</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
+            <th>Due Date</th><th>Status</th><th>Notes</th><th class="option-cell"></th>
           </tr>
         </thead>
-        <tbody></tbody>
-        <tfoot>
-          <tr id="monthlyTotalRow"><td>Saldo do Mês</td></tr>
-          <tr id="accumulatedTotalRow" class="tfoot-bold"><td>Saldo Acumulado</td></tr>
-        </tfoot>
+        <tbody id="doneList"></tbody>
       </table>
     </div>
-    <canvas id="chart" height="85"></canvas>
   </div>
-  <div id="dropdown-holder"></div>
-  <script>
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyC8w5g9ot_LWkFgpsZN0UBDOeREeSd17UA",
-      authDomain: "cashflow-6188e.firebaseapp.com",
-      databaseURL: "https://cashflow-6188e-default-rtdb.firebaseio.com",
-      projectId: "cashflow-6188e",
-      storageBucket: "cashflow-6188e.appspot.com",
-      messagingSenderId: "644882577807",
-      appId: "1:644882577807:web:92e5e6df27c4d0d7feb3fa"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
-    // Meses formato: Jan/25, Fev/25, etc.
-    const meses = Array.from({ length: 24 }, (_, i) => {
-      const d = new Date();
-      d.setMonth(d.getMonth() + i);
-      const mesAbrev = d.toLocaleString('pt-BR', { month: 'short' }).replace('.', '');
-      const ano = d.getFullYear().toString().slice(2);
-      return `${mesAbrev.charAt(0).toUpperCase() + mesAbrev.slice(1)}/${ano}`;
+  <div class="section">
+    <button class="toggle-link" id="paidToggle" onclick="toggleSection('paidSection', this)">Show Paid Projects</button>
+    <div id="paidSection" class="hidden">
+      <h3>Paid Projects</h3>
+      <table>
+        <thead>
+          <tr>
+            <th></th><th>WO #</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
+            <th>Due Date</th><th>Status</th><th>Notes</th><th class="option-cell"></th>
+          </tr>
+        </thead>
+        <tbody id="paidList"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCgSkYIvenfEzyjef50OD01Ox9et-nyBMo",
+  authDomain: "fluxo-6d716.firebaseapp.com",
+  databaseURL: "https://fluxo-6d716-default-rtdb.firebaseio.com",
+  projectId: "fluxo-6d716",
+  storageBucket: "fluxo-6d716.appspot.com",
+  messagingSenderId: "761253335013",
+  appId: "1:761253335013:web:44c30372a4749203a3690c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database().ref('projects');
+let pendingStatusId = null;
+
+function formatDateToMMDDYY(dateStr) {
+  if (!dateStr) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${mm}/${dd}/${yy}`;
+  }
+  if (/^\d{2}\/\d{2}\/\d{2}$/.test(dateStr)) return dateStr;
+  return "";
+}
+
+function addProject() {
+  const ids = ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"];
+  const data = {};
+  ids.forEach(id => {
+    const elem = document.getElementById(id);
+    data[id] = elem && elem.value ? elem.value.trim() : "";
+  });
+
+  const requiredFields = ["project", "customer", "store", "technician", "due_date", "status"];
+  const isValid = requiredFields.every(id => {
+    const val = data[id];
+    return val && val !== "" && val !== "Customer" && val !== "Technician" && val !== "Status";
+  });
+
+  if (!isValid) {
+    alert("Fill in all required fields.");
+    return;
+  }
+
+  data.due_date = formatDateToMMDDYY(data.due_date);
+  db.push(data)
+    .then(() => {
+      ids.forEach(id => {
+        const elem = document.getElementById(id);
+        if (elem) elem.value = "";
+      });
+      document.getElementById("customer").selectedIndex = 0;
+      document.getElementById("technician").selectedIndex = 0;
+      document.getElementById("status").selectedIndex = 0;
+    })
+    .catch(error => {
+      console.error("Error adding project:", error);
+      alert("Error saving to database. Check console.");
     });
+}
 
-    const table = document.getElementById("cashFlowTable");
-    const theadRow = table.querySelector("thead tr");
-    const tbody = table.querySelector("tbody");
-    const totalRow = document.getElementById("monthlyTotalRow");
-    const acumuladoRow = document.getElementById("accumulatedTotalRow");
-    const dropdownHolder = document.getElementById('dropdown-holder');
+function renderNotesCell(id, note) {
+  return `<textarea class="notes-cell" onblur="saveObservation('${id}', this.value)">${note ? note.replace(/</g, "&lt;").replace(/>/g, "&gt;") : ''}</textarea>`;
+}
 
-    // Monta os cabeçalhos
-    meses.forEach(m => {
-      theadRow.innerHTML += `<th>${m}</th>`;
-      totalRow.innerHTML += `<td>R$ 0,00</td>`;
-      acumuladoRow.innerHTML += `<td>R$ 0,00</td>`;
+function saveObservation(id, val) {
+  db.child(id + '/observations').set(val);
+}
+
+function renderStatusDropdown(id, currentStatus) {
+  const statusOptions = ["Needs Estimate", "Needs to Schedule", "Work Scheduled", "Done", "Paid"];
+  return `
+    <select onchange="handleStatusChange('${id}', this.value)">
+      ${statusOptions.map(status => `
+        <option value="${status}" ${status === currentStatus ? 'selected' : ''}>
+          ${status}
+        </option>`).join('')}
+    </select>
+  `;
+}
+
+function handleStatusChange(id, status) {
+  if (status === "Work Scheduled") {
+    pendingStatusId = id;
+    document.getElementById("popupDate").value = "";
+    document.getElementById("overlay").style.display = "block";
+    document.getElementById("datePopup").style.display = "block";
+  } else {
+    db.child(id + '/status').set(status);
+  }
+}
+
+function confirmDate() {
+  const date = document.getElementById("popupDate").value;
+  if (date && pendingStatusId) {
+    const formattedDate = formatDateToMMDDYY(date);
+    db.child(pendingStatusId + '/status').set("Work Scheduled");
+    db.child(pendingStatusId + '/due_date').set(formattedDate);
+  }
+  closePopup();
+}
+
+function closePopup() {
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("datePopup").style.display = "none";
+  pendingStatusId = null;
+}
+
+function toggleSection(sectionId, btn) {
+  const section = document.getElementById(sectionId);
+  section.classList.toggle("hidden");
+  if (btn) {
+    btn.textContent = section.classList.contains("hidden")
+      ? (sectionId === "doneSection" ? "Show Done Projects" : "Show Paid Projects")
+      : (sectionId === "doneSection" ? "Hide Done Projects" : "Hide Paid Projects");
+  }
+}
+
+function renderOptionsCell(id) {
+  return `
+    <button class="action-btn" onclick="toggleOptions('${id}')">⋮</button>
+    <div id="opts-${id}" class="options">
+      <button class="action-btn" onclick="editProject('${id}')">Edit</button>
+      <button class="action-btn" onclick="deleteProject('${id}')">Delete</button>
+    </div>
+  `;
+}
+
+function toggleOptions(id) {
+  const rowOpts = document.getElementById('opts-' + id);
+  if (rowOpts) rowOpts.style.display = rowOpts.style.display === "block" ? "none" : "block";
+}
+
+function editProject(id) {
+  db.child(id).once('value', s => {
+    const p = s.val();
+    ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"].forEach(f => {
+      const v = prompt(`Edit ${f}`, p[f] || "");
+      if (v !== null) db.child(id + '/' + f).set(v);
     });
+  });
+}
 
-    let categorias = [];
-    let valoresPorCategoria = {};
+function deleteProject(id) {
+  if (confirm("Delete this project?")) db.child(id).remove();
+}
 
-    function fmtBRL(v) {
-      return "R$ " + (isNaN(v) ? "0,00" : v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-    }
-
-    // Categoria linha
-    function desenharLinhaCategoria(cat, idx, valores = []) {
-      const tr = document.createElement("tr");
-      tr.dataset.nome = cat.nome;
-      tr.dataset.tipo = cat.tipo;
-      tr.dataset.idx = idx;
-
-      // label + ações
-      const tdLabel = document.createElement("td");
-      const labelSpan = document.createElement("span");
-      labelSpan.textContent = cat.nome;
-      labelSpan.className = "cat-label";
-      labelSpan.tabIndex = 0;
-      labelSpan.onclick = function(e) {
-        e.stopPropagation();
-        document.querySelectorAll('.cat-label').forEach(s=>s.classList.remove('active'));
-        document.querySelectorAll('.cat-actions').forEach(a=>a.style.display='none');
-        labelSpan.classList.add('active');
-        actionsSpan.style.display = "inline-flex";
-      };
-      tdLabel.appendChild(labelSpan);
-
-      const actionsSpan = document.createElement("span");
-      actionsSpan.className = "cat-actions";
-      actionsSpan.innerHTML = `
-          <button class="cat-btn" title="Mover para cima" onclick="moveCategoria('${cat.nome}', -1)">↑</button>
-          <button class="cat-btn" title="Mover para baixo" onclick="moveCategoria('${cat.nome}', 1)">↓</button>
-          <button class="cat-btn" title="Editar" onclick="editarCategoria('${cat.nome}')">✏️</button>
-          <button class="cat-btn" title="Excluir" onclick="removerCategoria('${cat.nome}')">🗑️</button>
-      `;
-      tdLabel.appendChild(actionsSpan);
-      tr.appendChild(tdLabel);
-
-      for (let i = 0; i < 24; i++) {
-        const td = document.createElement("td");
-        td.contentEditable = true;
-        td.inputMode = "decimal";
-        let valorAtual = valores[i] || "";
-        td.textContent = valorAtual !== "" ? fmtBRL(parseFloat(valorAtual)) : "";
-
-        td.addEventListener("focus", function() {
-          let txt = td.textContent.replace(/[^\d,-]/g, '').replace(',', '.');
-          td.textContent = (parseFloat(txt) || txt === "0" ? txt : "");
-        });
-        td.addEventListener("blur", function() {
-          let txt = td.textContent.replace(/[^\d,-]/g, '').replace(',', '.');
-          let vNum = parseFloat(txt);
-          td.textContent = (txt.trim() === "" || isNaN(vNum)) ? "" : fmtBRL(vNum);
-          atualizarEAtualizarDB();
-        });
-        tr.appendChild(td);
+function loadProjects() {
+  db.on('value', snap => {
+    const tbody = document.getElementById('list');
+    const doneBody = document.getElementById('doneList');
+    const paidBody = document.getElementById('paidList');
+    tbody.innerHTML = "";
+    doneBody.innerHTML = "";
+    paidBody.innerHTML = "";
+    const projects = [];
+    snap.forEach(c => {
+      projects.push({ ...c.val(), id: c.key });
+    });
+    projects.sort((a, b) => {
+      const dateA = new Date(a.due_date);
+      const dateB = new Date(b.due_date);
+      return dateA - dateB;
+    });
+    projects.forEach(p => {
+      const row = `
+        <tr data-id="${p.id}">
+          <td class="expand-btn"></td>
+          <td>${p.wo || ''}</td>
+          <td>${p.project}</td>
+          <td>${p.customer}</td>
+          <td>${p.store}</td>
+          <td>${p.technician}</td>
+          <td>${p.due_date || ''}</td>
+          <td>${renderStatusDropdown(p.id, p.status)}</td>
+          <td>${renderNotesCell(p.id, p.observations)}</td>
+          <td class="option-cell">${renderOptionsCell(p.id)}</td>
+        </tr>`;
+      if (p.status === "Done") {
+        doneBody.innerHTML += row;
+      } else if (p.status === "Paid") {
+        paidBody.innerHTML += row;
+      } else {
+        tbody.innerHTML += row;
       }
-      return tr;
+    });
+  });
+}
+
+['customer', 'technician'].forEach(type => {
+  document.getElementById(type).onchange = function () {
+    if (this.value === "new") {
+      const n = prompt(`New ${type}:`);
+      if (n) this.insertBefore(new Option(n, n, true, true), this.lastChild);
     }
+  };
+});
 
-    // Renderiza tabela E força cálculo dos totais sempre que renderizar
-    function renderizarTabela() {
-      tbody.innerHTML = '';
-      categorias.forEach((cat, idx) => {
-        const valores = valoresPorCategoria[cat.nome] || Array(24).fill("");
-        tbody.appendChild(desenharLinhaCategoria(cat, idx, valores));
-      });
-      calcularTotais(); // <--- sempre calcula após desenhar
-    }
-
-    // Cálculo dos totais e saldo acumulado
-    function calcularTotais() {
-      const totais = Array(24).fill(0);
-      const acumulados = Array(24).fill(0);
-      tbody.querySelectorAll("tr").forEach(tr => {
-        const tipo = tr.dataset.tipo;
-        [...tr.cells].slice(1).forEach((td, idx) => {
-          let txt = td.textContent.replace(/[^\d,-]/g, '').replace(',', '.');
-          let val = parseFloat(txt) || 0;
-          if (tipo === "despesa") val *= -1;
-          totais[idx] += val;
-        });
-      });
-      totais.forEach((v, i) => {
-        totalRow.cells[i + 1].textContent = fmtBRL(v);
-        acumulados[i] = (acumulados[i - 1] || 0) + v;
-        acumuladoRow.cells[i + 1].textContent = fmtBRL(acumulados[i]);
-      });
-      atualizarGrafico(acumulados);
-    }
-
-    function atualizarEAtualizarDB() {
-      valoresPorCategoria = {};
-      tbody.querySelectorAll("tr").forEach(tr => {
-        const nome = tr.dataset.nome;
-        const valores = [...tr.cells].slice(1).map(td => {
-          let txt = td.textContent.replace(/[^\d,-]/g, '').replace(',', '.');
-          let val = parseFloat(txt);
-          return isNaN(val) ? "" : val;
-        });
-        valoresPorCategoria[nome] = valores;
-      });
-      db.ref("valores").set(valoresPorCategoria);
-      calcularTotais();
-    }
-
-    // Adicionar categoria com modal elegante
-    document.getElementById("addCategoryBtn").onclick = () => {
-      mostrarDropdownNovaCategoria();
-    };
-
-    function mostrarDropdownNovaCategoria() {
-      const modal = document.createElement('div');
-      modal.className = "dropdown-modal";
-      modal.innerHTML = `
-        <h3>Adicionar categoria</h3>
-        <input id="cat-nome-input" type="text" placeholder="Nome da categoria" maxlength="28" />
-        <select id="cat-tipo-select">
-          <option value="receita">Receita</option>
-          <option value="despesa">Despesa</option>
-        </select>
-        <button id="cat-add-confirm">Adicionar</button>
-      `;
-      const backdrop = document.createElement('div');
-      backdrop.className = "dropdown-backdrop";
-      backdrop.onclick = fecharDropdown;
-
-      function fecharDropdown() { dropdownHolder.innerHTML = ''; }
-      dropdownHolder.innerHTML = '';
-      dropdownHolder.appendChild(backdrop);
-      dropdownHolder.appendChild(modal);
-
-      document.getElementById("cat-add-confirm").onclick = function() {
-        const nome = document.getElementById("cat-nome-input").value.trim();
-        const tipo = document.getElementById("cat-tipo-select").value;
-        if (!nome) { alert("Digite um nome."); return; }
-        if (!["receita", "despesa"].includes(tipo)) { alert("Tipo inválido."); return; }
-        if (categorias.find(c=>c.nome === nome)) { alert("Categoria já existe."); return; }
-        categorias.push({ nome, tipo });
-        valoresPorCategoria[nome] = Array(24).fill("");
-        salvarCategorias();
-        fecharDropdown();
-        renderizarTabela(); // Força recalcular os totais
-      };
-      document.getElementById("cat-nome-input").focus();
-    }
-
-    // Editar categoria
-    window.editarCategoria = function(nome) {
-      const cat = categorias.find(c => c.nome === nome);
-      if (!cat) return;
-      mostrarDropdownEditarCategoria(cat);
-    };
-
-    function mostrarDropdownEditarCategoria(cat) {
-      const modal = document.createElement('div');
-      modal.className = "dropdown-modal";
-      modal.innerHTML = `
-        <h3>Editar categoria</h3>
-        <input id="cat-nome-edit" type="text" value="${cat.nome}" maxlength="28" />
-        <select id="cat-tipo-edit">
-          <option value="receita"${cat.tipo==='receita'?' selected':''}>Receita</option>
-          <option value="despesa"${cat.tipo==='despesa'?' selected':''}>Despesa</option>
-        </select>
-        <button id="cat-edit-confirm">Salvar</button>
-      `;
-      const backdrop = document.createElement('div');
-      backdrop.className = "dropdown-backdrop";
-      backdrop.onclick = fecharDropdown;
-
-      function fecharDropdown() { dropdownHolder.innerHTML = ''; }
-      dropdownHolder.innerHTML = '';
-      dropdownHolder.appendChild(backdrop);
-      dropdownHolder.appendChild(modal);
-
-      document.getElementById("cat-edit-confirm").onclick = function() {
-        const novonome = document.getElementById("cat-nome-edit").value.trim();
-        const tipo = document.getElementById("cat-tipo-edit").value;
-        if (!novonome) { alert("Digite um nome."); return
+window.onload = loadProjects;
+</script>
+</body>
+</html>
