@@ -123,9 +123,9 @@
     </select>
     <input id="due_date" type="date" style="flex: 1;" />
     <select id="status" style="flex: 1;">
-      <option value="NeedsEstimate">Needs estimate</option>
-      <option value="NeedsToSchedule">Needs to Schedule</option>
-      <option value="WorkScheduled">Work Scheduled</option>
+      <option value="Needs Estimate">Needs Estimate</option>
+      <option value="Needs to Schedule">Needs to Schedule</option>
+      <option value="Work Scheduled">Work Scheduled</option>
       <option value="Done">Done</option>
       <option value="Paid">Paid</option>
     </select>
@@ -160,13 +160,11 @@ const db = firebase.database().ref('projects');
 
 let pendingStatusId = null;
 
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d)) return dateStr;
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  const yy = String(d.getFullYear()).slice(2);
+function formatDateToMMDDYY(dateStr) {
+  const date = new Date(dateStr);
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const yy = String(date.getFullYear()).slice(-2);
   return `${mm}/${dd}/${yy}`;
 }
 
@@ -174,7 +172,8 @@ function addProject() {
   const ids = ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"];
   const data = {};
   ids.forEach(id => data[id] = document.getElementById(id).value);
-  if (data.project && data.customer && data.store && data.technician && data.status) {
+  if (ids.slice(0, 6).every(id => data[id])) {
+    data.due_date = formatDateToMMDDYY(data.due_date);
     db.push(data);
     ids.forEach(id => document.getElementById(id).value = "");
   } else {
@@ -183,19 +182,19 @@ function addProject() {
 }
 
 function renderStatusDropdown(id, currentStatus) {
-  const statusOptions = ["NeedsEstimate", "NeedsToSchedule", "WorkScheduled", "Done", "Paid"];
+  const statusOptions = ["Needs Estimate", "Needs to Schedule", "Work Scheduled", "Done", "Paid"];
   return `
     <select onchange="handleStatusChange('${id}', this.value)">
       ${statusOptions.map(status => `
         <option value="${status}" ${status === currentStatus ? 'selected' : ''}>
-          ${status.replace(/([A-Z])/g, ' $1').trim()}
+          ${status}
         </option>`).join('')}
     </select>
   `;
 }
 
 function handleStatusChange(id, status) {
-  if (status === "WorkScheduled") {
+  if (status === "Work Scheduled") {
     pendingStatusId = id;
     document.getElementById("popupDate").value = "";
     document.getElementById("overlay").style.display = "block";
@@ -208,8 +207,9 @@ function handleStatusChange(id, status) {
 function confirmDate() {
   const date = document.getElementById("popupDate").value;
   if (date && pendingStatusId) {
-    db.child(pendingStatusId + '/status').set("WorkScheduled");
-    db.child(pendingStatusId + '/due_date').set(date);
+    const formattedDate = formatDateToMMDDYY(date);
+    db.child(pendingStatusId + '/status').set("Work Scheduled");
+    db.child(pendingStatusId + '/due_date').set(formattedDate);
   }
   closePopup();
 }
@@ -228,7 +228,11 @@ function loadProjects() {
     snap.forEach(c => {
       projects.push({ ...c.val(), id: c.key });
     });
-    projects.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+    projects.sort((a, b) => {
+      const dateA = new Date(a.due_date);
+      const dateB = new Date(b.due_date);
+      return dateA - dateB;
+    });
     projects.forEach(p => {
       tbody.innerHTML += `
         <tr data-id="${p.id}">
@@ -240,45 +244,11 @@ function loadProjects() {
           <td>${p.customer}</td>
           <td>${p.store}</td>
           <td>${p.technician}</td>
-          <td>${formatDate(p.due_date)}</td>
+          <td>${p.due_date || ''}</td>
           <td>${renderStatusDropdown(p.id, p.status)}</td>
           <td>${p.observations || ''}</td>
         </tr>
         <tr id="opts-${p.id}" class="options"><td colspan="9">
-          <button onclick="edit('${p.id}')">Edit</button>
-          <button onclick="db.child('${p.id}').remove()">Delete</button>
-        </td></tr>`;
-    });
-  });
-}
-
-function toggle(id) {
-  const opts = document.getElementById('opts-' + id);
-  const arrow = document.getElementById('arrow-' + id);
-  opts.style.display = opts.style.display === 'table-row' ? 'none' : 'table-row';
-  arrow.classList.toggle('open');
-}
-
-function edit(id) {
-  db.child(id).once('value', s => {
-    const p = s.val();
-    ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"].forEach(f => {
-      const v = prompt(`Edit ${f}`, p[f]);
-      if (v) db.child(id + '/' + f).set(v);
-    });
-  });
-}
-
-['customer', 'technician'].forEach(type => {
-  document.getElementById(type).onchange = function () {
-    if (this.value === "new") {
-      const n = prompt(`New ${type}:`);
-      if (n) this.insertBefore(new Option(n, n, true, true), this.lastChild);
-    }
-  };
-});
-
-window.onload = loadProjects;
-</script>
-</body>
-</html>
+          <button onclick="edit('${p.id}')">Edit</button
+::contentReference[oaicite:0]{index=0}
+ 
