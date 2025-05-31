@@ -85,6 +85,22 @@
       background: rgba(0,0,0,0.3);
       z-index: 999;
     }
+
+    .section {
+      margin-top: 30px;
+    }
+
+    .section h3 {
+      margin-bottom: 10px;
+    }
+
+    .toggle-button {
+      margin-bottom: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -134,15 +150,50 @@
     <button onclick="addProject()" style="flex: 0.5;">Add</button>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th></th><th>WO #</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
-        <th>Due Date</th><th>Status</th><th>Notes</th>
-      </tr>
-    </thead>
-    <tbody id="list"></tbody>
-  </table>
+  <div class="section">
+    <h3>Active Projects</h3>
+    <table>
+      <thead>
+        <tr>
+          <th></th><th>WO #</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
+          <th>Due Date</th><th>Status</th><th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="list"></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <button class="toggle-button" onclick="toggleSection('doneSection')">Toggle Done Projects</button>
+    <div id="doneSection" class="hidden">
+      <h3>Done Projects</h3>
+      <table>
+        <thead>
+          <tr>
+            <th></th><th>WO #</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
+            <th>Due Date</th><th>Status</th><th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="doneList"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section">
+    <button class="toggle-button" onclick="toggleSection('paidSection')">Toggle Paid Projects</button>
+    <div id="paidSection" class="hidden">
+      <h3>Paid Projects</h3>
+      <table>
+        <thead>
+          <tr>
+            <th></th><th>WO #</th><th>Project</th><th>Customer</th><th>Store</th><th>Technician</th>
+            <th>Due Date</th><th>Status</th><th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="paidList"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -178,7 +229,6 @@ function addProject() {
 
   if (isValid) {
     data.due_date = formatDateToMMDDYY(data.due_date);
-    console.log("Data to be added:", data);
     db.push(data)
       .then(() => {
         ids.forEach(id => document.getElementById(id).value = "");
@@ -213,53 +263,6 @@ function handleStatusChange(id, status) {
     document.getElementById("overlay").style.display = "block";
     document.getElementById("datePopup").style.display = "block";
   } else {
-    db.child(id + '/status').set(status);
-  }
-}
-
-function confirmDate() {
-  const date = document.getElementById("popupDate").value;
-  if (date && pendingStatusId) {
-    const formattedDate = formatDateToMMDDYY(date);
-    db.child(pendingStatusId + '/status').set("Work Scheduled");
-    db.child(pendingStatusId + '/due_date').set(formattedDate);
-  }
-  closePopup();
-}
-
-function closePopup() {
-  document.getElementById("overlay").style.display = "none";
-  document.getElementById("datePopup").style.display = "none";
-  pendingStatusId = null;
-}
-
-function loadProjects() {
-  db.on('value', snap => {
-    const tbody = document.getElementById('list');
-    tbody.innerHTML = "";
-    const projects = [];
-    snap.forEach(c => {
-      projects.push({ ...c.val(), id: c.key });
-    });
-    projects.sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
-    projects.forEach(p => {
-      tbody.innerHTML += `
-        <tr data-id="${p.id}">
-          <td class="expand-btn"><span class="arrow" id="arrow-${p.id}">▶️</span></td>
-          <td>${p.wo || ''}</td>
-          <td>${p.project}</td>
-          <td>${p.customer}</td>
-          <td>${p.store}</td>
-          <td>${p.technician}</td>
-          <td>${p.due_date || ''}</td>
-          <td>${renderStatusDropdown(p.id, p.status)}</td>
-          <td>${p.observations || ''}</td>
-        </tr>`;
-    });
-  });
-}
-
-window.onload = loadProjects;
-</script>
-</body>
-</html>
+    db.child(id + '/
+::contentReference[oaicite:0]{index=0}
+ 
