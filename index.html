@@ -123,7 +123,7 @@
     </select>
     <input id="due_date" type="date" style="flex: 1;" />
     <select id="status" style="flex: 1;">
-      <option value="NeedsEstimate">Needs Estimate</option>
+      <option value="NeedsEstimate">Needs estimate</option>
       <option value="NeedsToSchedule">Needs to Schedule</option>
       <option value="WorkScheduled">Work Scheduled</option>
       <option value="Done">Done</option>
@@ -160,11 +160,21 @@ const db = firebase.database().ref('projects');
 
 let pendingStatusId = null;
 
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(2);
+  return `${mm}/${dd}/${yy}`;
+}
+
 function addProject() {
   const ids = ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"];
   const data = {};
   ids.forEach(id => data[id] = document.getElementById(id).value);
-  if (ids.slice(0, 6).every(id => data[id])) {
+  if (data.project && data.customer && data.store && data.technician && data.status) {
     db.push(data);
     ids.forEach(id => document.getElementById(id).value = "");
   } else {
@@ -210,16 +220,6 @@ function closePopup() {
   pendingStatusId = null;
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  if (isNaN(date)) return '';
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  const yy = String(date.getFullYear()).slice(-2);
-  return `${mm}/${dd}/${yy}`;
-}
-
 function loadProjects() {
   db.on('value', snap => {
     const tbody = document.getElementById('list');
@@ -242,6 +242,43 @@ function loadProjects() {
           <td>${p.technician}</td>
           <td>${formatDate(p.due_date)}</td>
           <td>${renderStatusDropdown(p.id, p.status)}</td>
-          <td>${
-::contentReference[oaicite:23]{index=23}
- 
+          <td>${p.observations || ''}</td>
+        </tr>
+        <tr id="opts-${p.id}" class="options"><td colspan="9">
+          <button onclick="edit('${p.id}')">Edit</button>
+          <button onclick="db.child('${p.id}').remove()">Delete</button>
+        </td></tr>`;
+    });
+  });
+}
+
+function toggle(id) {
+  const opts = document.getElementById('opts-' + id);
+  const arrow = document.getElementById('arrow-' + id);
+  opts.style.display = opts.style.display === 'table-row' ? 'none' : 'table-row';
+  arrow.classList.toggle('open');
+}
+
+function edit(id) {
+  db.child(id).once('value', s => {
+    const p = s.val();
+    ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"].forEach(f => {
+      const v = prompt(`Edit ${f}`, p[f]);
+      if (v) db.child(id + '/' + f).set(v);
+    });
+  });
+}
+
+['customer', 'technician'].forEach(type => {
+  document.getElementById(type).onchange = function () {
+    if (this.value === "new") {
+      const n = prompt(`New ${type}:`);
+      if (n) this.insertBefore(new Option(n, n, true, true), this.lastChild);
+    }
+  };
+});
+
+window.onload = loadProjects;
+</script>
+</body>
+</html>
