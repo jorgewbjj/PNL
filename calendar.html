@@ -43,6 +43,13 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database().ref('projects');
 
+    function convertToISO(dateStr) {
+      // Expects MM/DD/YY and returns YYYY-MM-DD
+      const [mm, dd, yy] = dateStr.split('/');
+      const fullYear = +yy < 50 ? '20' + yy : '19' + yy;
+      return `${fullYear}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
       const calendarEl = document.getElementById('calendar');
       const calendar = new FullCalendar.Calendar(calendarEl, {
@@ -58,13 +65,13 @@
           const p = child.val();
 
           if (
-            p.status === "WorkScheduled" &&
+            p.status === "Work Scheduled" &&
             p.due_date &&
-            /^\d{4}-\d{2}-\d{2}$/.test(p.due_date)
+            /^\d{2}\/\d{2}\/\d{2}$/.test(p.due_date)
           ) {
             events.push({
               title: `${p.project || 'Unnamed'} (${p.customer || ''})`,
-              start: p.due_date,
+              start: convertToISO(p.due_date),
               color: '#17a2b8'
             });
           }
