@@ -1,6 +1,6 @@
 
 
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -15,21 +15,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
 
   <style>
-    body {
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
       font-family: 'Roboto', sans-serif;
       background: #f7f9fc;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
     }
 
     .container {
-      width: 100%;
-      max-width: 1200px;
-      background: #fff;
+      width: 100vw;
+      min-height: 100vh;
       padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
     }
 
     input, select, textarea, button {
@@ -37,7 +35,6 @@
       border-radius: 4px;
       border: 1px solid #ccc;
       width: 100%;
-      box-sizing: border-box;
       margin-bottom: 10px;
     }
 
@@ -63,18 +60,20 @@
       text-align: left;
     }
 
-    .status {
+    .status-display {
       padding: 3px 7px;
       border-radius: 4px;
-      color: #fff;
       font-size: 0.8em;
+      color: #fff;
       cursor: pointer;
+      display: inline-block;
     }
 
-    .Planned { background: #6c757d; }
-    .WorkScheduled { background: #17a2b8; }
-    .InProgress { background: #ffc107; }
-    .Completed { background: #28a745; }
+    .NeedsEstimate { background-color: #6c757d; }
+    .NeedsToSchedule { background-color: #ffc107; }
+    .WorkScheduled { background-color: #17a2b8; }
+    .Done { background-color: #28a745; }
+    .Paid { background-color: #007bff; }
 
     .expand-btn { cursor: pointer; }
     .options { display: none; }
@@ -109,10 +108,11 @@
     </select>
     <input id="due_date" type="date" style="flex: 1;" />
     <select id="status" style="flex: 1;">
-      <option value="Planned">Planned</option>
+      <option value="NeedsEstimate">Needs estimate</option>
+      <option value="NeedsToSchedule">Needs to Schedule</option>
       <option value="WorkScheduled">Work Scheduled</option>
-      <option value="InProgress">In Progress</option>
-      <option value="Completed">Completed</option>
+      <option value="Done">Done</option>
+      <option value="Paid">Paid</option>
     </select>
     <input id="wo" placeholder="WO #" style="flex: 1;" />
     <textarea id="observations" placeholder="Observations" style="flex: 3; height: 38px;"></textarea>
@@ -136,25 +136,46 @@ const firebaseConfig = {
   authDomain: "fluxo-6d716.firebaseapp.com",
   databaseURL: "https://fluxo-6d716-default-rtdb.firebaseio.com",
   projectId: "fluxo-6d716",
-  storageBucket: "fluxo-6d716.firebasestorage.app",
+  storageBucket: "fluxo-6d716.appspot.com",
   messagingSenderId: "761253335013",
   appId: "1:761253335013:web:44c30372a4749203a3690c"
 };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database().ref('projects');
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database().ref('projects');
 
-  function addProject() {
-    const ids = ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"];
-    const data = {};
-    ids.forEach(id => data[id] = document.getElementById(id).value);
-    if (ids.slice(0, 6).every(id => data[id])) {
-      db.push(data);
-      ids.forEach(id => document.getElementById(id).value = "");
-    } else {
-      alert("Fill required fields.");
-    }
+function addProject() {
+  const ids = ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"];
+  const data = {};
+  ids.forEach(id => data[id] = document.getElementById(id).value);
+  if (ids.slice(0, 6).every(id => data[id])) {
+    db.push(data);
+    ids.forEach(id => document.getElementById(id).value = "");
+  } else {
+    alert("Fill required fields.");
   }
+}
 
+function renderStatusDropdown(id, currentStatus) {
+  const statusOptions = ["NeedsEstimate", "NeedsToSchedule", "WorkScheduled", "Done", "Paid"];
+  return `
+    <select onchange="updateStatus('${id}', this.value)">
+      ${statusOptions.map(status => `
+        <option value="${status}" ${status === currentStatus ? 'selected' : ''}>
+          ${status.replace(/([A-Z])/g, ' $1').trim()}
+        </option>`).join('')}
+    </select>
+  `;
+}
+
+function updateStatus(id, status) {
+  db.child(id + '/status').set(status);
+  if (status === "WorkScheduled") {
+    const newDate = prompt("Select the scheduled date (YYYY-MM-DD):");
+    if (newDate) db.child(id + '/due_date').set(newDate);
+  }
+}
+
+function loadProjects() {
   db.on('value', snap => {
     const tbody = document.getElementById('list');
     tbody.innerHTML = "";
@@ -175,7 +196,7 @@ const firebaseConfig = {
           <td>${p.store}</td>
           <td>${p.technician}</td>
           <td>${p.due_date}</td>
-          <td><span class="status ${p.status}" onclick="changeStatus('${p.id}', '${p.status}')">${p.status.replace(/([A-Z])/g, ' $1').trim()}</span></td>
+          <td>${renderStatusDropdown(p.id, p.status)}</td>
           <td>${p.observations || ''}</td>
         </tr>
         <tr id="opts-${p.id}" class="options"><td colspan="9">
@@ -184,45 +205,35 @@ const firebaseConfig = {
         </td></tr>`;
     });
   });
+}
 
-  function toggle(id) {
-    const opts = document.getElementById('opts-' + id);
-    const arrow = document.getElementById('arrow-' + id);
-    opts.style.display = opts.style.display === 'table-row' ? 'none' : 'table-row';
-    arrow.classList.toggle('open');
-  }
+function toggle(id) {
+  const opts = document.getElementById('opts-' + id);
+  const arrow = document.getElementById('arrow-' + id);
+  opts.style.display = opts.style.display === 'table-row' ? 'none' : 'table-row';
+  arrow.classList.toggle('open');
+}
 
-  function edit(id) {
-    db.child(id).once('value', s => {
-      const p = s.val();
-      ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"].forEach(f => {
-        const v = prompt(`Edit ${f}`, p[f]);
-        if (v) db.child(id + '/' + f).set(v);
-      });
+function edit(id) {
+  db.child(id).once('value', s => {
+    const p = s.val();
+    ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"].forEach(f => {
+      const v = prompt(`Edit ${f}`, p[f]);
+      if (v) db.child(id + '/' + f).set(v);
     });
-  }
-
-  function changeStatus(id, currentStatus) {
-    const statusList = ["Planned", "WorkScheduled", "InProgress", "Completed"];
-    const newStatus = prompt(`New status:\n${statusList.join(", ")}`, currentStatus);
-    if (newStatus && statusList.includes(newStatus)) {
-      db.child(id + '/status').set(newStatus);
-
-      if (newStatus === "WorkScheduled") {
-        const newDate = prompt("Select the scheduled date (YYYY-MM-DD):");
-        if (newDate) db.child(id + '/due_date').set(newDate);
-      }
-    }
-  }
-
-  ['customer', 'technician'].forEach(type => {
-    document.getElementById(type).onchange = function () {
-      if (this.value === "new") {
-        const n = prompt(`New ${type}:`);
-        if (n) this.insertBefore(new Option(n, n, true, true), this.lastChild);
-      }
-    };
   });
+}
+
+['customer', 'technician'].forEach(type => {
+  document.getElementById(type).onchange = function () {
+    if (this.value === "new") {
+      const n = prompt(`New ${type}:`);
+      if (n) this.insertBefore(new Option(n, n, true, true), this.lastChild);
+    }
+  };
+});
+
+window.onload = loadProjects;
 </script>
 </body>
 </html>
