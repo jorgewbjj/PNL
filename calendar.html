@@ -3,14 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <title>Scheduled Work Calendar</title>
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
+  <!-- FullCalendar -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f7f9fc;
+      margin: 0;
       padding: 20px;
     }
     #calendar {
@@ -24,7 +27,7 @@
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">Work Scheduled Calendar</h2>
+  <h2 style="text-align:center;">Work Scheduled Projects Calendar</h2>
   <div id="calendar"></div>
 
   <script>
@@ -37,7 +40,6 @@
       messagingSenderId: "761253335013",
       appId: "1:761253335013:web:44c30372a4749203a3690c"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database().ref('projects');
 
@@ -45,17 +47,19 @@
       const calendarEl = document.getElementById('calendar');
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
+        height: 'auto',
         events: []
       });
       calendar.render();
 
-      db.once('value').then(snapshot => {
+      db.on('value', (snapshot) => {
         const events = [];
         snapshot.forEach(child => {
           const p = child.val();
+
           if (
             p.status === "WorkScheduled" &&
-            typeof p.due_date === "string" &&
+            p.due_date &&
             /^\d{4}-\d{2}-\d{2}$/.test(p.due_date)
           ) {
             events.push({
@@ -65,6 +69,7 @@
             });
           }
         });
+
         calendar.removeAllEvents();
         calendar.addEventSource(events);
       });
