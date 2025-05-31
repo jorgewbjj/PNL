@@ -1,5 +1,6 @@
 
- <!DOCTYPE html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -29,15 +30,16 @@
   <div id="calendar"></div>
 
   <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyCgSkYIvenfEzyjef50OD01Ox9et-nyBMo",
-  authDomain: "fluxo-6d716.firebaseapp.com",
-  databaseURL: "https://fluxo-6d716-default-rtdb.firebaseio.com",
-  projectId: "fluxo-6d716",
-  storageBucket: "fluxo-6d716.firebasestorage.app",
-  messagingSenderId: "761253335013",
-  appId: "1:761253335013:web:44c30372a4749203a3690c"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyCgSkYIvenfEzyjef50OD01Ox9et-nyBMo",
+      authDomain: "fluxo-6d716.firebaseapp.com",
+      databaseURL: "https://fluxo-6d716-default-rtdb.firebaseio.com",
+      projectId: "fluxo-6d716",
+      storageBucket: "fluxo-6d716.appspot.com",
+      messagingSenderId: "761253335013",
+      appId: "1:761253335013:web:44c30372a4749203a3690c"
+    };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database().ref('projects');
 
@@ -53,7 +55,7 @@ const firebaseConfig = {
         const events = [];
         snapshot.forEach(child => {
           const p = child.val();
-          if (p.status === "WorkScheduled") {
+          if (p.status === "WorkScheduled" && p.due_date) {
             events.push({
               title: `${p.project} (${p.customer})`,
               start: p.due_date,
@@ -68,3 +70,4 @@ const firebaseConfig = {
   </script>
 </body>
 </html>
+
