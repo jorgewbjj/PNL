@@ -7,7 +7,6 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" />
   <style>
     * { box-sizing: border-box; }
@@ -21,8 +20,23 @@
       min-height: 32px; height: 32px; resize: vertical; width: 100%;
       border: 1px solid #e0e0e0; font-size: 1em; background: #fcfcfc;
     }
-    button { background: #0a74da; color: #fff; cursor: pointer; }
-    button:hover { background: #095bb5; }
+    button, .round-toggle-btn {
+      background: #0a74da; color: #fff; cursor: pointer;
+      border: none; outline: none;
+    }
+    button:hover, .round-toggle-btn:hover { background: #095bb5; }
+    .round-toggle-btn {
+      border-radius: 20px;
+      font-size: 0.98em;
+      padding: 6px 16px;
+      min-width: 44px;
+      margin: 8px 0;
+      float: right;
+      box-shadow: 0 2px 8px rgba(10, 116, 218, 0.08);
+      transition: background 0.15s;
+    }
+    .toggle-on { background: #0a74da; color: #fff; }
+    .toggle-off { background: #f0f2f6; color: #0a74da; border: 1px solid #dbe7f6; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
     th, td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
     .expand-btn { cursor: pointer; width:32px; }
@@ -39,31 +53,26 @@
       background: rgba(0,0,0,0.3); z-index: 999;
     }
     .section { margin-top: 24px; }
-    .toggle-link {
-      color: #0a74da;
-      background: none;
-      border: none;
-      padding: 0 8px;
-      font-size: 0.98em;
-      text-align: right;
-      cursor: pointer;
-      float: right;
-      margin-bottom: 0;
-    }
-    .toggle-link:focus, .toggle-link:hover { text-decoration: underline; background: none; }
     .hidden { display: none; }
     .section h3 { margin: 0 0 8px 0; display: inline-block; font-size: 1.06em; }
-    @media (max-width: 800px) {
-      .container { padding: 8px; }
-      th, td { padding: 4px; font-size: 0.95em; }
-      input, select, textarea, button { font-size: 1em; }
-    }
     .action-btn {
       background: none; border: none; color: #0a74da; font-size: 0.98em; cursor: pointer;
       padding: 2px 6px; margin-right: 3px; border-radius: 3px;
     }
     .action-btn:hover { background: #e0ecfa; }
     .option-cell { width:90px; }
+    @media (max-width: 800px) {
+      .container { padding: 8px; }
+      th, td { padding: 4px; font-size: 0.95em; }
+      input, select, textarea, button { font-size: 1em; }
+      .round-toggle-btn { font-size: 0.95em; padding: 6px 12px;}
+    }
+    .toggle-btn-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 4px;
+    }
   </style>
 </head>
 <body>
@@ -128,7 +137,9 @@
   </div>
 
   <div class="section">
-    <button class="toggle-link" id="doneToggle" onclick="toggleSection('doneSection', this)">Show Done Projects</button>
+    <div class="toggle-btn-wrapper">
+      <button class="round-toggle-btn toggle-off" id="doneToggle" onclick="toggleSection('doneSection', this)">Show Done Projects</button>
+    </div>
     <div id="doneSection" class="hidden">
       <h3>Done Projects</h3>
       <table>
@@ -144,7 +155,9 @@
   </div>
 
   <div class="section">
-    <button class="toggle-link" id="paidToggle" onclick="toggleSection('paidSection', this)">Show Paid Projects</button>
+    <div class="toggle-btn-wrapper">
+      <button class="round-toggle-btn toggle-off" id="paidToggle" onclick="toggleSection('paidSection', this)">Show Paid Projects</button>
+    </div>
     <div id="paidSection" class="hidden">
       <h3>Paid Projects</h3>
       <table>
@@ -275,9 +288,11 @@ function toggleSection(sectionId, btn) {
   const section = document.getElementById(sectionId);
   section.classList.toggle("hidden");
   if (btn) {
-    btn.textContent = section.classList.contains("hidden")
-      ? (sectionId === "doneSection" ? "Show Done Projects" : "Show Paid Projects")
-      : (sectionId === "doneSection" ? "Hide Done Projects" : "Hide Paid Projects");
+    const isShown = !section.classList.contains("hidden");
+    btn.textContent = isShown
+      ? (sectionId === "doneSection" ? "Hide Done Projects" : "Hide Paid Projects")
+      : (sectionId === "doneSection" ? "Show Done Projects" : "Show Paid Projects");
+    btn.className = "round-toggle-btn " + (isShown ? "toggle-on" : "toggle-off");
   }
 }
 
