@@ -1,6 +1,4 @@
-
-
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -60,28 +58,45 @@
       text-align: left;
     }
 
-    .status-display {
-      padding: 3px 7px;
-      border-radius: 4px;
-      font-size: 0.8em;
-      color: #fff;
-      cursor: pointer;
-      display: inline-block;
-    }
-
-    .NeedsEstimate { background-color: #6c757d; }
-    .NeedsToSchedule { background-color: #ffc107; }
-    .WorkScheduled { background-color: #17a2b8; }
-    .Done { background-color: #28a745; }
-    .Paid { background-color: #007bff; }
-
     .expand-btn { cursor: pointer; }
     .options { display: none; }
     .arrow { transition: 0.2s ease; }
     .arrow.open { transform: rotate(90deg); }
+
+    #datePopup {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.3);
+      z-index: 999;
+    }
   </style>
 </head>
 <body>
+<div id="overlay"></div>
+<div id="datePopup">
+  <h3>Select Work Scheduled Date</h3>
+  <input type="date" id="popupDate" />
+  <br><br>
+  <button onclick="confirmDate()">Confirm</button>
+  <button onclick="closePopup()">Cancel</button>
+</div>
+
 <div class="container">
   <div style="display:flex; justify-content:space-between; align-items:center;">
     <h2>Project Management</h2>
@@ -143,6 +158,8 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database().ref('projects');
 
+let pendingStatusId = null;
+
 function addProject() {
   const ids = ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"];
   const data = {};
@@ -158,7 +175,7 @@ function addProject() {
 function renderStatusDropdown(id, currentStatus) {
   const statusOptions = ["NeedsEstimate", "NeedsToSchedule", "WorkScheduled", "Done", "Paid"];
   return `
-    <select onchange="updateStatus('${id}', this.value)">
+    <select onchange="handleStatusChange('${id}', this.value)">
       ${statusOptions.map(status => `
         <option value="${status}" ${status === currentStatus ? 'selected' : ''}>
           ${status.replace(/([A-Z])/g, ' $1').trim()}
@@ -167,12 +184,30 @@ function renderStatusDropdown(id, currentStatus) {
   `;
 }
 
-function updateStatus(id, status) {
-  db.child(id + '/status').set(status);
+function handleStatusChange(id, status) {
   if (status === "WorkScheduled") {
-    const newDate = prompt("Select the scheduled date (YYYY-MM-DD):");
-    if (newDate) db.child(id + '/due_date').set(newDate);
+    pendingStatusId = id;
+    document.getElementById("popupDate").value = "";
+    document.getElementById("overlay").style.display = "block";
+    document.getElementById("datePopup").style.display = "block";
+  } else {
+    db.child(id + '/status').set(status);
   }
+}
+
+function confirmDate() {
+  const date = document.getElementById("popupDate").value;
+  if (date && pendingStatusId) {
+    db.child(pendingStatusId + '/status').set("WorkScheduled");
+    db.child(pendingStatusId + '/due_date').set(date);
+  }
+  closePopup();
+}
+
+function closePopup() {
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("datePopup").style.display = "none";
+  pendingStatusId = null;
 }
 
 function loadProjects() {
@@ -195,7 +230,7 @@ function loadProjects() {
           <td>${p.customer}</td>
           <td>${p.store}</td>
           <td>${p.technician}</td>
-          <td>${p.due_date}</td>
+          <td>${p.due_date || ''}</td>
           <td>${renderStatusDropdown(p.id, p.status)}</td>
           <td>${p.observations || ''}</td>
         </tr>
