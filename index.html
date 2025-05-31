@@ -157,8 +157,17 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database().ref('projects');
-
 let pendingStatusId = null;
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(2);
+  return `${mm}/${dd}/${yy}`;
+}
 
 function addProject() {
   const ids = ["project", "customer", "store", "technician", "due_date", "status", "wo", "observations"];
@@ -230,7 +239,7 @@ function loadProjects() {
           <td>${p.customer}</td>
           <td>${p.store}</td>
           <td>${p.technician}</td>
-          <td>${p.due_date || ''}</td>
+          <td>${formatDate(p.due_date)}</td>
           <td>${renderStatusDropdown(p.id, p.status)}</td>
           <td>${p.observations || ''}</td>
         </tr>
