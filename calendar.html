@@ -55,7 +55,7 @@
         const events = [];
         snapshot.forEach(child => {
           const p = child.val();
-          if (p.status === "WorkScheduled" && p.due_date) {
+          if (p.status === "Work Scheduled" && p.due_date) {
             events.push({
               title: `${p.project} (${p.customer})`,
               start: p.due_date,
