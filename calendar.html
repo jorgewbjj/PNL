@@ -1,86 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Scheduled Work Calendar</title>
+  <meta charset="UTF-8">
+  <title>Monthly Project Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-database-compat.js"></script>
-  <!-- FullCalendar -->
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f7f9fc;
+      font-family: 'Roboto', sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      background: #f7f9fc;
+      color: #1a1a1a;
     }
-    #calendar {
-      max-width: 1100px;
-      margin: 0 auto;
+    .calendar-container {
+      max-width: 800px;
+      margin: 40px auto;
       background: #fff;
-      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      padding: 32px 16px 24px 16px;
+    }
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .calendar-header button {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 4px 12px;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+    .calendar-day, .calendar-cell {
+      text-align: center;
+      font-weight: 700;
+      padding: 8px 0;
+    }
+    .calendar-day {
+      color: #9ca3af;
+      border-bottom: 1px solid #f1f1f1;
+      font-size: 1rem;
+    }
+    .calendar-cell {
+      background: #f5f7fa;
+      min-height: 80px;
       border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+      font-weight: 400;
+      font-size: 1rem;
+      position: relative;
+    }
+    .calendar-date {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-size: 0.9em;
+      color: #bdbdbd;
+      font-weight: 700;
+    }
+    .project-name {
+      display: block;
+      margin-top: 18px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 0.95em;
+    }
+    .status-green {
+      color: #1db954;
+      background: #e6fce6;
+      border: 1px solid #c1f1c1;
+    }
+    .status-red {
+      color: #e53935;
+      background: #ffebee;
+      border: 1px solid #ffcdd2;
+    }
+    @media (max-width: 600px) {
+      .calendar-container {
+        padding: 6px;
+      }
+      .calendar-cell {
+        min-height: 48px;
+        font-size: 0.9em;
+      }
+      .calendar-header h2 {
+        font-size: 1.2em;
+      }
     }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">Work Scheduled Projects Calendar</h2>
-  <div id="calendar"></div>
+  <div class="calendar-container">
+    <div class="calendar-header">
+      <button id="prevMonth">&#8592;</button>
+      <h2 id="monthYear"></h2>
+      <button id="nextMonth">&#8594;</button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid">
+      <!-- Calendar will render here -->
+    </div>
+  </div>
 
   <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCgSkYIvenfEzyjef50OD01Ox9et-nyBMo",
-      authDomain: "fluxo-6d716.firebaseapp.com",
-      databaseURL: "https://fluxo-6d716-default-rtdb.firebaseio.com",
-      projectId: "fluxo-6d716",
-      storageBucket: "fluxo-6d716.appspot.com",
-      messagingSenderId: "761253335013",
-      appId: "1:761253335013:web:44c30372a4749203a3690c"
-    };
+    // ======= 1. CONFIGURE YOUR FIREBASE BELOW =======
+const firebaseConfig = {
+  apiKey: "AIzaSyCgSkYIvenfEzyjef50OD01Ox9et-nyBMo",
+  authDomain: "fluxo-6d716.firebaseapp.com",
+  databaseURL: "https://fluxo-6d716-default-rtdb.firebaseio.com",
+  projectId: "fluxo-6d716",
+  storageBucket: "fluxo-6d716.appspot.com",
+  messagingSenderId: "761253335013",
+  appId: "1:761253335013:web:44c30372a4749203a3690c"
+};
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database().ref('projects');
+    const db = firebase.database();
 
-    function convertToISO(dateStr) {
-      // Expects MM/DD/YY and returns YYYY-MM-DD
-      const [mm, dd, yy] = dateStr.split('/');
-      const fullYear = +yy < 50 ? '20' + yy : '19' + yy;
-      return `${fullYear}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
-    }
+    // ======= 2. CALENDAR LOGIC =======
+    const monthYearLabel = document.getElementById('monthYear');
+    const calendarGrid = document.getElementById('calendarGrid');
+    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    let currentDate = new Date();
 
-    document.addEventListener('DOMContentLoaded', function () {
-      const calendarEl = document.getElementById('calendar');
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        height: 'auto',
-        events: []
-      });
-      calendar.render();
+    document.getElementById('prevMonth').onclick = () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    };
+    document.getElementById('nextMonth').onclick = () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    };
 
-      db.on('value', (snapshot) => {
-        const events = [];
+    function getProjectsForMonth(year, month, callback) {
+      db.ref('projects').on('value', (snapshot) => {
+        const projects = [];
         snapshot.forEach(child => {
           const p = child.val();
-
-          if (
-            p.status === "Work Scheduled" &&
-            p.due_date &&
-            /^\d{2}\/\d{2}\/\d{2}$/.test(p.due_date)
-          ) {
-            events.push({
-              title: `${p.project || 'Unnamed'} (${p.customer || ''})`,
-              start: convertToISO(p.due_date),
-              color: '#17a2b8'
-            });
+          const date = new Date(p.date);
+          if(date.getFullYear() === year && date.getMonth() === month) {
+            projects.push({...p, id: child.key, day: date.getDate()});
           }
         });
-
-        calendar.removeAllEvents();
-        calendar.addEventSource(events);
+        callback(projects);
       });
-    });
+    }
+
+    function renderCalendar() {
+      // Set title
+      const month = currentDate.getMonth();
+      const year = currentDate.getFullYear();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      // Header with days
+      calendarGrid.innerHTML = daysOfWeek.map(d =>
+        `<div class="calendar-day">${d}</div>`).join("");
+
+      // Empty slots for first week
+      for(let i = 0; i < firstDay; i++) {
+        calendarGrid.innerHTML += `<div class="calendar-cell"></div>`;
+      }
+
+      // Load projects then fill days
+      getProjectsForMonth(year, month, projects => {
+        for(let day = 1; day <= daysInMonth; day++) {
+          const dayProjects = projects.filter(p => p.day === day);
+          let cellContent = `<span class="calendar-date">${day}</span>`;
+          dayProjects.forEach(p => {
+            const isDoneOrPaid = ['done', 'paid'].includes(p.status.toLowerCase());
+            cellContent += `<span class="project-name ${isDoneOrPaid ? 'status-green' : 'status-red'}">${p.name}</span>`;
+          });
+          calendarGrid.innerHTML += `<div class="calendar-cell">${cellContent}</div>`;
+        }
+        // Fill out remaining cells (if month does not end on Saturday)
+        const totalCells = firstDay + daysInMonth;
+        for(let i = 0; i < (7 - (totalCells % 7)) % 7; i++) {
+          calendarGrid.innerHTML += `<div class="calendar-cell"></div>`;
+        }
+      });
+
+      // Month/Year Label
+      monthYearLabel.textContent = `${currentDate.toLocaleString('default', { month: 'long' })} ${year}`;
+    }
+
+    renderCalendar();
   </script>
 </body>
 </html>
